@@ -102,3 +102,16 @@ test_code:
 
 # here is an example for execution of individual test
 # go test -v -run TestFilesDB
+
+test: test-errors test-dbs
+
+test-errors:
+	cd test && LD_LIBRARY_PATH=${odir} DYLD_LIBRARY_PATH=${odir} go test -v -run TestDBSError
+test-dbs:
+	cd test && rm -f /tmp/dbs-test.db && \
+	sqlite3 /tmp/dbs-test.db < ../static/schema/sqlite-schema.sql && \
+	LD_LIBRARY_PATH=${odir} DYLD_LIBRARY_PATH=${odir} \
+	DBS_DB_FILE=/tmp/dbs-test.db \
+	DBS_API_PARAMETERS_FILE=../static/parameters.json \
+	DBS_LEXICON_FILE=../static/lexicon_writer.json \
+	go test -v -run TestDBS

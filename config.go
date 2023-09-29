@@ -19,6 +19,11 @@ type Configuration struct {
 	LogFile string `json:"log_file"` // server log file
 	Port    int    `json:"port"`     // server port number
 	Verbose int    `json:"verbose"`  // verbose output
+
+	// db related configuration
+	DBFile             string `json:"dbfile"`               // dbs db file with secrets
+	MaxDBConnections   int    `json:"max_db_connections"`   // maximum number of DB connections
+	MaxIdleConnections int    `json:"max_idle_connections"` // maximum number of idle connections
 }
 
 // Config variable represents configuration object
