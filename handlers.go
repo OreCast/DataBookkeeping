@@ -11,40 +11,42 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type DatasetRequest struct {
+type NameRequest struct {
 	Name string `json:"name"`
 }
 
-// DatasetHandler provives access to GET /datasets end-point
+// UserHandler provides access to /users and /user/:name end-point
+func UserHandler(c *gin.Context) {
+	ApiHandler(c, "user")
+}
+
+// FileHandler provides access to /files and /file/:name end-point
+func FileHandler(c *gin.Context) {
+	ApiHandler(c, "file")
+}
+
+// DatasetHandler provides access to GET /datasets and /dataset/:name end-point
 func DatasetHandler(c *gin.Context) {
-	//     c.JSON(200, gin.H{"status": "ok"})
+	ApiHandler(c, "dataset")
+}
+
+// ApiHandler represents generic API handler for GET/POST/PUT/DELETE requests of a specific API
+func ApiHandler(c *gin.Context, api string) {
 	r := c.Request
 	w := c.Writer
 	if r.Method == "POST" {
-		DBSPostHandler(w, r, "datasets")
+		DBSPostHandler(w, r, api)
 	} else if r.Method == "PUT" {
-		DBSPutHandler(w, r, "datasets")
+		DBSPutHandler(w, r, api)
+	} else if r.Method == "DELETE" {
+		DBSDeleteHandler(w, r, api)
 	} else {
-		DBSGetHandler(w, r, "datasets")
-	}
-
-}
-
-// DatasetPostHandler provides access to POST /datasets end-point
-func DatasetPostHandler(c *gin.Context) {
-	var data DatasetRequest
-	err := c.BindJSON(&data)
-	if err == nil {
-		c.JSON(200, gin.H{"status": "ok"})
-	} else {
-		c.JSON(400, gin.H{"status": "fail", "error": err.Error()})
+		DBSGetHandler(w, r, api)
 	}
 }
 
-// DBSGetHandler is a generic Get handler to call DBS Get APIs.
-//
-//gocyclo:ignore
-func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
+// helper function to get DBS API
+func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) {
 	// all outputs will be added to output list
 	sep := ","
 	if r.Header.Get("Accept") == "application/ndjson" {
@@ -58,8 +60,7 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 
 	params, err := parseParams(r)
 	if err != nil {
-		responseMsg(w, r, err, http.StatusBadRequest)
-		return
+		return nil, err
 	}
 	if utils.VERBOSE > 0 {
 		dn, _ := r.Header["Cms-Authn-Dn"]
@@ -80,10 +81,23 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 	if utils.VERBOSE > 0 {
 		log.Println(api.String())
 	}
-	if a == "datasets" {
-		err = api.Datasets()
-	} else if a == "files" {
-		err = api.Files()
+	return api, nil
+}
+
+// DBSGetHandler is a generic Get handler to call DBS Get APIs.
+//
+//gocyclo:ignore
+func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
+	api, err := getApi(w, r, a)
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+	}
+	if a == "dataset" {
+		err = api.GetDataset()
+	} else if a == "file" {
+		err = api.GetFile()
+	} else if a == "user" {
+		err = api.GetUser()
 	} else {
 		err = dbs.NotImplementedApiErr
 	}
@@ -93,14 +107,74 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 	}
 }
 
-// DBSPostHandler is a generic Post Handler to call DBS Post APIs
+//
+// POST handler
+//
+// DBSPostHandler is a generic handler to call DBS Post APIs
 //
 //gocyclo:ignore
 func DBSPostHandler(w http.ResponseWriter, r *http.Request, a string) {
+	api, err := getApi(w, r, a)
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+	}
+	if a == "dataset" {
+		err = api.InsertDataset()
+	} else if a == "file" {
+		err = api.InsertFile()
+	} else if a == "user" {
+		err = api.InsertUser()
+	} else {
+		err = dbs.NotImplementedApiErr
+	}
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+		return
+	}
 }
 
-// DBSPutHandler is a generic Post Handler to call DBS Post APIs
+// DBSPutHandler is a generic handler to call DBS put APIs
 //
 //gocyclo:ignore
 func DBSPutHandler(w http.ResponseWriter, r *http.Request, a string) {
+	api, err := getApi(w, r, a)
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+	}
+	if a == "dataset" {
+		err = api.UpdateDataset()
+	} else if a == "file" {
+		err = api.UpdateFile()
+	} else if a == "user" {
+		err = api.UpdateUser()
+	} else {
+		err = dbs.NotImplementedApiErr
+	}
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+		return
+	}
+}
+
+// DBSDeleteHandler is a generic handler to call DBS delete APIs
+//
+//gocyclo:ignore
+func DBSDeleteHandler(w http.ResponseWriter, r *http.Request, a string) {
+	api, err := getApi(w, r, a)
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+	}
+	if a == "dataset" {
+		err = api.DeleteDataset()
+	} else if a == "file" {
+		err = api.DeleteFile()
+	} else if a == "user" {
+		err = api.DeleteUser()
+	} else {
+		err = dbs.NotImplementedApiErr
+	}
+	if err != nil {
+		responseMsg(w, r, err, http.StatusBadRequest)
+		return
+	}
 }

@@ -15,7 +15,7 @@ import (
 
 // Files DBS API
 //gocyclo:ignore
-func (a *API) Files() error {
+func (a *API) GetFile() error {
 	var args []interface{}
 	var conds []string
 	var err error
@@ -27,7 +27,7 @@ func (a *API) Files() error {
 
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER
-	stm, err := LoadTemplateSQL("files", tmpl)
+	stm, err := LoadTemplateSQL("select_file", tmpl)
 	if err != nil {
 		return Error(err, LoadErrorCode, "", "dbs.files.Files")
 	}
@@ -39,6 +39,16 @@ func (a *API) Files() error {
 	if err != nil {
 		return Error(err, QueryErrorCode, "", "dbs.files.Files")
 	}
+	return nil
+}
+
+func (a *API) InsertFile() error {
+	return nil
+}
+func (a *API) UpdateFile() error {
+	return nil
+}
+func (a *API) DeleteFile() error {
 	return nil
 }
 

@@ -88,26 +88,13 @@ func responseMsg(w http.ResponseWriter, r *http.Request, err error, code int) in
 	return int64(len(data))
 }
 
-// helper function to parse POST HTTP request payload
+// helper function to parse HTTP request parameters
 func parseParams(r *http.Request) (dbs.Record, error) {
 	params := make(dbs.Record)
 	// r.URL.Query() returns map[string][]string
 	for k, values := range r.URL.Query() {
 		var vals []string
 		for _, v := range values {
-			if strings.Contains(v, "[") {
-				if strings.ToLower(k) == "run_num" {
-					params["runList"] = true
-				}
-				v = v[1 : len(v)-1]
-				for _, x := range strings.Split(v, ",") {
-					x = strings.Trim(x, " ")
-					x = strings.Replace(x, "'", "", -1)
-					vals = append(vals, x)
-				}
-				continue
-			}
-			v = strings.Replace(v, "'", "", -1)
 			vals = append(vals, v)
 		}
 		params[k] = vals

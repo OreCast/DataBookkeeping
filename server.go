@@ -51,9 +51,28 @@ func setupRouter() *gin.Engine {
 
 	// GET routes
 	r.GET("/datasets", DatasetHandler)
+	r.GET("/files", FileHandler)
+	r.GET("/users", UserHandler)
+
+	// individual routes
+	r.GET("/dataset/:name", DatasetHandler)
+	r.GET("/file/:name", FileHandler)
+	r.GET("/user/:name", UserHandler)
 
 	// POST routes
-	r.POST("/dataset/:dataset", DatasetHandler)
+	r.POST("/dataset/:name", DatasetHandler)
+	r.POST("/file/:name", FileHandler)
+	r.POST("/user/:name", UserHandler)
+
+	// PUT routes
+	r.PUT("/dataset/:name", DatasetHandler)
+	r.PUT("/file/:name", FileHandler)
+	r.PUT("/user/:name", UserHandler)
+
+	// DELETE routes
+	r.DELETE("/dataset/:name", DatasetHandler)
+	r.DELETE("/file/:name", FileHandler)
+	r.DELETE("/user/:name", UserHandler)
 
 	return r
 }

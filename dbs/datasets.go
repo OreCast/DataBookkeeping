@@ -10,10 +10,29 @@ import (
 	"github.com/OreCast/DataBookkeeping/utils"
 )
 
+// Datasets represents Datasets DBS DB table
+type Datasets struct {
+	DATASET_ID             int64  `json:"dataset_id"`
+	DATASET                string `json:"dataset" validate:"required"`
+	CREATION_DATE          int64  `json:"creation_date" validate:"required,number"`
+	CREATE_BY              string `json:"create_by" validate:"required"`
+	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number"`
+	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
+}
+
+// DatasetRecord we receive for InsertDatasets API
+type DatasetRecord struct {
+	DATASET                string `json:"dataset" validate:"required"`
+	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
+	CREATE_BY              string `json:"create_by" validate:"required"`
+	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
+	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
+}
+
 // Datasets API
 //
 //gocyclo:ignore
-func (a *API) Datasets() error {
+func (a *API) GetDataset() error {
 	if utils.VERBOSE > 1 {
 		log.Printf("datasets params %+v", a.Params)
 	}
@@ -51,14 +70,14 @@ func (a *API) Datasets() error {
 	return nil
 }
 
-// Datasets represents Datasets DBS DB table
-type Datasets struct {
-	DATASET_ID             int64  `json:"dataset_id"`
-	DATASET                string `json:"dataset" validate:"required"`
-	CREATION_DATE          int64  `json:"creation_date" validate:"required,number"`
-	CREATE_BY              string `json:"create_by" validate:"required"`
-	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number"`
-	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
+func (a *API) InsertDataset() error {
+	return nil
+}
+func (a *API) UpdateDataset() error {
+	return nil
+}
+func (a *API) DeleteDataset() error {
+	return nil
 }
 
 // Insert implementation of Datasets
@@ -163,13 +182,4 @@ func (r *Datasets) Decode(reader io.Reader) error {
 		return Error(err, UnmarshalErrorCode, "", "dbs.datasets.Decode")
 	}
 	return nil
-}
-
-// DatasetRecord we receive for InsertDatasets API
-type DatasetRecord struct {
-	DATASET                string `json:"dataset" validate:"required"`
-	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
-	CREATE_BY              string `json:"create_by" validate:"required"`
-	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
-	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
 }
