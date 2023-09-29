@@ -32,7 +32,7 @@ type API struct {
 	Reader    io.Reader           // reader to read data payload
 	Writer    http.ResponseWriter // writer to write results back to client
 	Context   context.Context     // HTTP context
-	Params    Record              // HTTP input parameters
+	Params    Record              // HTTP parameters, i.e. map of any data type
 	Separator string              // string separator for ndjson format
 	CreateBy  string              // create by value from run-time
 	Api       string              // api name
@@ -997,4 +997,40 @@ func RunsConditions(runs []string, table string) (string, []string, []interface{
 		}
 	}
 	return token, conds, args, nil
+}
+
+// helper function to extract from dbs record string attribute value
+func getString(record Record, attr string) string {
+	if val, ok := record[attr]; ok {
+		if utils.VERBOSE > 1 {
+			log.Printf("getString %+v attribute %s value type %T", record, attr, val)
+		}
+		switch v := val.(type) {
+		case []any, []string:
+			items := v.([]string)
+			return items[0]
+		case any:
+			return v.(string)
+		}
+	}
+	log.Printf("WARNING: fail to extract %s from DBS record %+v", attr, record)
+	return ""
+}
+
+// helper function to extract from dbs record int64 attribute value
+func getInt64(record Record, attr string) int64 {
+	if val, ok := record[attr]; ok {
+		if utils.VERBOSE > 1 {
+			log.Printf("getInt64 %+v attribute %s value type %T", record, attr, val)
+		}
+		switch v := val.(type) {
+		case []any, []int, []int32, []int64:
+			items := v.([]int64)
+			return items[0]
+		case any:
+			return v.(int64)
+		}
+	}
+	log.Printf("WARNING: fail to extract %s from DBS record %+v", attr, record)
+	return 0
 }

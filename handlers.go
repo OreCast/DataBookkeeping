@@ -1,7 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"compress/gzip"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -58,19 +63,69 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 		w.Header().Add("Content-Type", "application/ndjson")
 	}
 
-	params, err := parseParams(r)
-	if err != nil {
-		return nil, err
-	}
-	if utils.VERBOSE > 0 {
-		dn, _ := r.Header["Cms-Authn-Dn"]
-		log.Printf("DBSGetHandler: API=%s, dn=%s, uri=%+v, params: %+v", a, dn, requestURI(r), params)
-	}
-	api := &dbs.API{
-		Writer:    w,
-		Params:    params,
-		Separator: sep,
-		Api:       a,
+	var api *dbs.API
+	if r.Method == "GET" || r.Method == "DELETE" {
+		// TODO: figure out how to handle POST/PUT/DELETE payload
+		// and read GET /api/:name
+		params := make(dbs.Record)
+		//         params, err := parseParams(r)
+		//         if err != nil {
+		//             return nil, err
+		//         }
+		api = &dbs.API{
+			Writer:    w,
+			Params:    params,
+			Separator: sep,
+			Api:       a,
+		}
+	} else { // all other HTTP requests POST/PUT may contain payload
+
+		headerContentType := r.Header.Get("Content-Type")
+		if headerContentType != "application/json" {
+			msg := fmt.Sprintf("unsupported Content-Type: '%s'", headerContentType)
+			e := dbs.Error(dbs.ContentTypeErr, dbs.ContentTypeErrorCode, msg, "web.DBSPostHandler")
+			responseMsg(w, r, e, http.StatusUnsupportedMediaType)
+			return nil, errors.New(msg)
+		}
+		defer r.Body.Close()
+		var params dbs.Record
+		if utils.VERBOSE > 0 {
+			dn, _ := r.Header["Cms-Authn-Dn"]
+			log.Printf("DBSPostHandler: API=%s, dn=%s, uri=%s", a, dn, requestURI(r))
+		}
+		cby := createBy(r)
+		body := r.Body
+		// handle gzip content encoding
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			r.Header.Del("Content-Length")
+			reader, err := gzip.NewReader(r.Body)
+			if err != nil {
+				msg := "unable to get gzip reader"
+				log.Println(msg, err)
+				e := dbs.Error(err, dbs.ReaderErrorCode, msg, "web.DBSPostHandler")
+				responseMsg(w, r, e, http.StatusInternalServerError)
+				return nil, errors.New(msg)
+			}
+			body = utils.GzipReader{reader, r.Body}
+		} else {
+			data, err := io.ReadAll(r.Body)
+			if err != nil {
+				msg := "unable to get io reader"
+				log.Println(msg, err)
+				e := dbs.Error(err, dbs.ReaderErrorCode, msg, "web.DBSPostHandler")
+				responseMsg(w, r, e, http.StatusInternalServerError)
+				return nil, errors.New(msg)
+			}
+			body = ioutil.NopCloser(bytes.NewBuffer(data))
+		}
+		api = &dbs.API{
+			Reader:    body,
+			Writer:    w,
+			Params:    params,
+			Separator: sep,
+			CreateBy:  cby,
+			Api:       a,
+		}
 	}
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		w.Header().Set("Content-Encoding", "gzip")
@@ -78,8 +133,9 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 		defer gw.Close()
 		api.Writer = utils.GzipWriter{GzipWriter: gw, Writer: w}
 	}
+
 	if utils.VERBOSE > 0 {
-		log.Println(api.String())
+		log.Println("Call DBS API", api.String())
 	}
 	return api, nil
 }

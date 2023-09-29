@@ -15,26 +15,14 @@ import (
 // Users represents Users DBS DB table
 type Users struct {
 	USER_ID                int64  `json:"user_id"`
-	LOGIN                  string `json:"logical_user_name" validate:"required"`
-	FIRST_NAME             string `json:"first_name" validate:"required"`
+	LOGIN                  string `json:"login" validate:"required"`
+	PASSWORD               string `json:"password" validate:"required"`
+	FIRST_NAME             string `json:"first_name"`
 	LAST_NAME              string `json:"last_name"`
-	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
-	CREATE_BY              string `json:"create_by" validate:"required"`
-	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
-	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
-}
-
-// UserRecord represents user record pass to the users API
-type UserRecord struct {
-	UserId               string `json:"user_id"`
-	Login                string `json:"login" binding:"required"`
-	FirstName            string `json:"login" binding:"required"`
-	LastName             string `json:"login" binding:"required"`
-	Password             string `json:"login" binding:"required"`
-	CreationDate         int64  `json:"login" binding:"required"`
-	CreateBy             string `json:"login" binding:"required"`
-	LastModificationDate int64  `json:"login" binding:"required"`
-	LastModifiedBy       string `json:"login" binding:"required"`
+	CREATION_DATE          int64  `json:"creation_date"`
+	CREATE_BY              string `json:"create_by"`
+	LAST_MODIFICATION_DATE int64  `json:"last_modification_date"`
+	LAST_MODIFIED_BY       string `json:"last_modified_by"`
 }
 
 // Users DBS API
@@ -43,11 +31,6 @@ func (a *API) GetUser() error {
 	var args []interface{}
 	var conds []string
 	var err error
-
-	if len(a.Params) == 0 {
-		msg := "Users API with empty parameter map"
-		return Error(InvalidParamErr, ParametersErrorCode, msg, "dbs.users.Users")
-	}
 
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER
@@ -66,12 +49,29 @@ func (a *API) GetUser() error {
 	return nil
 }
 
+// InsertUser inserts user record into DB
 func (a *API) InsertUser() error {
-	return nil
+	/*
+		userRecord := Users{
+			LOGIN:                  getString(a.Params, "login"),
+			FIRST_NAME:             getString(a.Params, "first_name"),
+			LAST_NAME:              getString(a.Params, "last_name"),
+			CREATION_DATE:          getInt64(a.Params, "creation_date"),
+			CREATE_BY:              getString(a.Params, "create_by"),
+			LAST_MODIFICATION_DATE: getInt64(a.Params, "last_modification_date"),
+			LAST_MODIFIED_BY:       getString(a.Params, "last_modified_by"),
+		}
+		return insertRecord(&userRecord, a.Reader)
+	*/
+	return insertRecord(&Users{}, a.Reader)
 }
+
+// UpdateUser inserts user record in DB
 func (a *API) UpdateUser() error {
 	return nil
 }
+
+// DeleteUser deletes user record in DB
 func (a *API) DeleteUser() error {
 	return nil
 }
@@ -111,7 +111,7 @@ func (r *Users) Insert(tx *sql.Tx) error {
 		return Error(err, ValidateErrorCode, "", "dbs.users.Insert")
 	}
 	// get SQL statement from static area
-	stm := getSQL("insert_users")
+	stm := getSQL("insert_user")
 	if utils.VERBOSE > 0 {
 		log.Printf("Insert Users record %+v", r)
 	} else if utils.VERBOSE > 1 {
@@ -123,6 +123,7 @@ func (r *Users) Insert(tx *sql.Tx) error {
 		r.LOGIN,
 		r.FIRST_NAME,
 		r.LAST_NAME,
+		r.PASSWORD,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,
@@ -154,8 +155,14 @@ func (r *Users) Validate() error {
 
 // SetDefaults implements set defaults for Users
 func (r *Users) SetDefaults() {
+	if r.CREATE_BY == "" {
+		r.CREATE_BY = "Server"
+	}
 	if r.CREATION_DATE == 0 {
 		r.CREATION_DATE = Date()
+	}
+	if r.LAST_MODIFIED_BY == "" {
+		r.LAST_MODIFIED_BY = "Server"
 	}
 	if r.LAST_MODIFICATION_DATE == 0 {
 		r.LAST_MODIFICATION_DATE = Date()

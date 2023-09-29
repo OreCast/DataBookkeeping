@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -91,15 +92,39 @@ func responseMsg(w http.ResponseWriter, r *http.Request, err error, code int) in
 // helper function to parse HTTP request parameters
 func parseParams(r *http.Request) (dbs.Record, error) {
 	params := make(dbs.Record)
-	// r.URL.Query() returns map[string][]string
-	for k, values := range r.URL.Query() {
-		var vals []string
-		for _, v := range values {
-			vals = append(vals, v)
-		}
-		params[k] = vals
+	if r.Method == "POST" {
+		//         return parsePayload(r)
+		return params, nil
 	}
-	return params, nil
+	// for /api/:name we need to use binding
+	var form NameRequest
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return params, err
+	}
+	defer r.Body.Close()
+	err = json.Unmarshal(data, &form)
+	if err != nil {
+		return params, err
+	}
+	rec, err := parsePayload(r)
+	if err != nil {
+		return params, err
+	}
+	rec["Name"] = form.Name
+	return rec, err
+
+	/*
+		// r.URL.Query() returns map[string][]string
+		for k, values := range r.URL.Query() {
+			var vals []string
+			for _, v := range values {
+				vals = append(vals, v)
+			}
+			params[k] = vals
+		}
+		return params, nil
+	*/
 }
 
 // helper function to parse POST HTTP request payload
@@ -134,4 +159,13 @@ func parsePayload(r *http.Request) (dbs.Record, error) {
 		params[k] = out
 	}
 	return params, nil
+}
+
+// helper function to extract user name or DN
+func createBy(r *http.Request) string {
+	cby := r.Header.Get("OreCast-CreateBy")
+	if cby == "" {
+		return "OreCast-workflow"
+	}
+	return cby
 }

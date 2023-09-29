@@ -60,9 +60,9 @@ func setupRouter() *gin.Engine {
 	r.GET("/user/:name", UserHandler)
 
 	// POST routes
-	r.POST("/dataset/:name", DatasetHandler)
-	r.POST("/file/:name", FileHandler)
-	r.POST("/user/:name", UserHandler)
+	r.POST("/dataset", DatasetHandler)
+	r.POST("/file", FileHandler)
+	r.POST("/user", UserHandler)
 
 	// PUT routes
 	r.PUT("/dataset/:name", DatasetHandler)
@@ -102,6 +102,9 @@ func dbInit(dbtype, dburi string) (*sql.DB, error) {
 }
 
 func Server(configFile string) {
+	// be verbose
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	// initialize record validator
 	dbs.RecordValidator = validator.New()
 
@@ -115,6 +118,7 @@ func Server(configFile string) {
 	log.Println("DBOWNER", dbowner)
 	// set static dir
 	utils.STATICDIR = Config.StaticDir
+	utils.VERBOSE = Config.Verbose
 
 	// setup DBS
 	db, dberr := dbInit(dbtype, dburi)
@@ -123,6 +127,9 @@ func Server(configFile string) {
 	}
 	dbs.DB = db
 	dbs.DBTYPE = dbtype
+	dbsql := dbs.LoadSQL(dbowner)
+	dbs.DBSQL = dbsql
+	dbs.DBOWNER = dbowner
 	defer dbs.DB.Close()
 
 	r := setupRouter()
