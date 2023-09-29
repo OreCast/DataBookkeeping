@@ -20,15 +20,6 @@ type Datasets struct {
 	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
 }
 
-// DatasetRecord we receive for InsertDatasets API
-type DatasetRecord struct {
-	DATASET                string `json:"dataset" validate:"required"`
-	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
-	CREATE_BY              string `json:"create_by" validate:"required"`
-	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
-	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
-}
-
 // Datasets API
 //
 //gocyclo:ignore
@@ -71,7 +62,9 @@ func (a *API) GetDataset() error {
 }
 
 func (a *API) InsertDataset() error {
-	return nil
+	// the API provides Reader which will be used by Decode function to load the HTTP payload
+	// and cast it to Datasets data structure
+	return insertRecord(&Datasets{}, a.Reader)
 }
 func (a *API) UpdateDataset() error {
 	return nil

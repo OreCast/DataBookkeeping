@@ -13,6 +13,23 @@ import (
 	"github.com/OreCast/DataBookkeeping/utils"
 )
 
+// Files represents Files DBS DB table
+type Files struct {
+	FILE_ID                int64  `json:"file_id"`
+	LOGICAL_FILE_NAME      string `json:"logical_file_name" validate:"required"`
+	IS_FILE_VALID          int64  `json:"is_file_valid" validate:"number"`
+	DATASET_ID             int64  `json:"dataset_id" validate:"number,gt=0"`
+	CHECK_SUM              string `json:"check_sum" validate:"required"`
+	FILE_SIZE              int64  `json:"file_size" validate:"required,number,gt=0"`
+	EVENT_COUNT            int64  `json:"event_count" validate:"number"`
+	ADLER32                string `json:"adler32" validate:"required"`
+	MD5                    string `json:"md5"`
+	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
+	CREATE_BY              string `json:"create_by" validate:"required"`
+	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
+	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
+}
+
 // Files DBS API
 //gocyclo:ignore
 func (a *API) GetFile() error {
@@ -43,30 +60,15 @@ func (a *API) GetFile() error {
 }
 
 func (a *API) InsertFile() error {
-	return nil
+	// the API provides Reader which will be used by Decode function to load the HTTP payload
+	// and cast it to Files data structure
+	return insertRecord(&Files{}, a.Reader)
 }
 func (a *API) UpdateFile() error {
 	return nil
 }
 func (a *API) DeleteFile() error {
 	return nil
-}
-
-// Files represents Files DBS DB table
-type Files struct {
-	FILE_ID                int64  `json:"file_id"`
-	LOGICAL_FILE_NAME      string `json:"logical_file_name" validate:"required"`
-	IS_FILE_VALID          int64  `json:"is_file_valid" validate:"number"`
-	DATASET_ID             int64  `json:"dataset_id" validate:"number,gt=0"`
-	CHECK_SUM              string `json:"check_sum" validate:"required"`
-	FILE_SIZE              int64  `json:"file_size" validate:"required,number,gt=0"`
-	EVENT_COUNT            int64  `json:"event_count" validate:"number"`
-	ADLER32                string `json:"adler32" validate:"required"`
-	MD5                    string `json:"md5"`
-	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
-	CREATE_BY              string `json:"create_by" validate:"required"`
-	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
-	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
 }
 
 // helper function to get next available FileID

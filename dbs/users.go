@@ -51,18 +51,8 @@ func (a *API) GetUser() error {
 
 // InsertUser inserts user record into DB
 func (a *API) InsertUser() error {
-	/*
-		userRecord := Users{
-			LOGIN:                  getString(a.Params, "login"),
-			FIRST_NAME:             getString(a.Params, "first_name"),
-			LAST_NAME:              getString(a.Params, "last_name"),
-			CREATION_DATE:          getInt64(a.Params, "creation_date"),
-			CREATE_BY:              getString(a.Params, "create_by"),
-			LAST_MODIFICATION_DATE: getInt64(a.Params, "last_modification_date"),
-			LAST_MODIFIED_BY:       getString(a.Params, "last_modified_by"),
-		}
-		return insertRecord(&userRecord, a.Reader)
-	*/
+	// the API provides Reader which will be used by Decode function to load the HTTP payload
+	// and cast it to Users data structure
 	return insertRecord(&Users{}, a.Reader)
 }
 
