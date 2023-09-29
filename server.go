@@ -1,5 +1,30 @@
 package main
 
+// DBS server
+// Copyright (c) 2023 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
+//
+// Some links:  http://www.alexedwards.net/blog/golang-response-snippets
+//              http://blog.golang.org/json-and-go
+// Go patterns: http://www.golangpatterns.info/home
+// Templates:   http://gohugo.io/templates/go-templates/
+//              http://golang.org/pkg/html/template/
+// Go examples: https://gobyexample.com/
+// for Go database API: http://go-database-sql.org/overview.html
+// Oracle drivers:
+//   _ "gopkg.in/rana/ora.v4"
+//   _ "github.com/mattn/go-oci8"
+// MySQL driver:
+//   _ "github.com/go-sql-driver/mysql"
+// SQLite driver:
+//  _ "github.com/mattn/go-sqlite3"
+//
+// Get profile's output
+// visit http://localhost:<port>/debug/pprof
+// or generate png plots
+// go tool pprof -png http://localhost:<port>/debug/pprof/heap > /tmp/heap.png
+// go tool pprof -png http://localhost:<port>/debug/pprof/profile > /tmp/profile.png
+
 import (
 	"database/sql"
 	"fmt"
@@ -10,6 +35,13 @@ import (
 	"github.com/OreCast/DataBookkeeping/utils"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
+
+	// GO profiler
+	_ "net/http/pprof"
+
+	// imports for supported DB drivers
+	// go-sqlite driver
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func setupRouter() *gin.Engine {
@@ -18,10 +50,10 @@ func setupRouter() *gin.Engine {
 	r := gin.Default()
 
 	// GET routes
-	r.GET("/dataset", DatasetHandler)
+	r.GET("/datasets", DatasetHandler)
 
 	// POST routes
-	r.POST("/dataset", DatasetPostHandler)
+	r.POST("/dataset/:dataset", DatasetHandler)
 
 	return r
 }
@@ -62,6 +94,9 @@ func Server(configFile string) {
 		utils.ORACLE = true
 	}
 	log.Println("DBOWNER", dbowner)
+	// set static dir
+	utils.STATICDIR = Config.StaticDir
+
 	// setup DBS
 	db, dberr := dbInit(dbtype, dburi)
 	if dberr != nil {

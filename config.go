@@ -24,6 +24,7 @@ type Configuration struct {
 	DBFile             string `json:"dbfile"`               // dbs db file with secrets
 	MaxDBConnections   int    `json:"max_db_connections"`   // maximum number of DB connections
 	MaxIdleConnections int    `json:"max_idle_connections"` // maximum number of idle connections
+	StaticDir          string `json:"staticdir"`            // location of static directory
 }
 
 // Config variable represents configuration object
@@ -44,7 +45,10 @@ func parseConfig(configFile string) error {
 
 	// default values
 	if Config.Port == 0 {
-		Config.Port = 8300
+		Config.Port = 8310
+	}
+	if Config.StaticDir == "" {
+		Config.StaticDir = "static"
 	}
 	return nil
 }

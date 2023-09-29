@@ -23,7 +23,7 @@ func (a *API) Datasets() error {
 	tmpl["Owner"] = DBOWNER
 
 	// get SQL statement from static area
-	stm, err := LoadTemplateSQL("datasets", tmpl)
+	stm, err := LoadTemplateSQL("select_dataset", tmpl)
 	if err != nil {
 		return Error(err, LoadErrorCode, "", "dbs.datasets.Datasets")
 	}
@@ -38,7 +38,6 @@ func (a *API) Datasets() error {
 		new(sql.NullInt64),
 		new(sql.NullString),
 		new(sql.NullFloat64),
-		new(sql.NullString),
 		new(sql.NullString),
 		new(sql.NullFloat64),
 		new(sql.NullString)}
