@@ -14,6 +14,8 @@ import (
 type Datasets struct {
 	DATASET_ID             int64  `json:"dataset_id"`
 	DATASET                string `json:"dataset" validate:"required"`
+	BUCKET_ID              int64  `json:"bucket_id" validate:"required"`
+	META_ID                string `json:"meta_id" validate:"required"`
 	CREATION_DATE          int64  `json:"creation_date" validate:"required,number"`
 	CREATE_BY              string `json:"create_by" validate:"required"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number"`
@@ -40,6 +42,7 @@ func (a *API) GetDataset() error {
 	cols := []string{
 		"dataset_id",
 		"dataset",
+		"meta_id",
 		"creation_date",
 		"create_by",
 		"last_modification_date",
@@ -105,6 +108,7 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 		stm,
 		r.DATASET_ID,
 		r.DATASET,
+		r.META_ID,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,

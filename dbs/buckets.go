@@ -12,32 +12,29 @@ import (
 	"github.com/OreCast/DataBookkeeping/utils"
 )
 
-// Users represents Users DBS DB table
-type Users struct {
-	USER_ID                int64  `json:"user_id"`
-	LOGIN                  string `json:"login" validate:"required"`
-	PASSWORD               string `json:"password" validate:"required"`
-	FIRST_NAME             string `json:"first_name"`
-	LAST_NAME              string `json:"last_name"`
-	EMAIL                  string `json:"email" validate:"required"`
+// Buckets represents Buckets DBS DB table
+type Buckets struct {
+	BUCKET_ID              int64  `json:"bucket_id"`
+	BUCKET                 string `json:"bucket" validate:"required"`
+	META_ID                string `json:"meta_id" validate:"required"`
 	CREATION_DATE          int64  `json:"creation_date"`
 	CREATE_BY              string `json:"create_by"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date"`
 	LAST_MODIFIED_BY       string `json:"last_modified_by"`
 }
 
-// Users DBS API
+// Buckets DBS API
 //gocyclo:ignore
-func (a *API) GetUser() error {
+func (a *API) GetBucket() error {
 	var args []interface{}
 	var conds []string
 	var err error
 
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER
-	stm, err := LoadTemplateSQL("select_user", tmpl)
+	stm, err := LoadTemplateSQL("select_bucket", tmpl)
 	if err != nil {
-		return Error(err, LoadErrorCode, "", "dbs.users.Users")
+		return Error(err, LoadErrorCode, "", "dbs.buckets.Buckets")
 	}
 
 	stm = WhereClause(stm, conds)
@@ -45,107 +42,105 @@ func (a *API) GetUser() error {
 	// use generic query API to fetch the results from DB
 	err = executeAll(a.Writer, a.Separator, stm, args...)
 	if err != nil {
-		return Error(err, QueryErrorCode, "", "dbs.users.Users")
+		return Error(err, QueryErrorCode, "", "dbs.buckets.Buckets")
 	}
 	return nil
 }
 
-// InsertUser inserts user record into DB
-func (a *API) InsertUser() error {
+// InsertBucket inserts bucket record into DB
+func (a *API) InsertBucket() error {
 	// the API provides Reader which will be used by Decode function to load the HTTP payload
-	// and cast it to Users data structure
-	return insertRecord(&Users{}, a.Reader)
+	// and cast it to Buckets data structure
+	return insertRecord(&Buckets{}, a.Reader)
 }
 
-// UpdateUser inserts user record in DB
-func (a *API) UpdateUser() error {
+// UpdateBucket inserts bucket record in DB
+func (a *API) UpdateBucket() error {
 	return nil
 }
 
-// DeleteUser deletes user record in DB
-func (a *API) DeleteUser() error {
+// DeleteBucket deletes bucket record in DB
+func (a *API) DeleteBucket() error {
 	return nil
 }
 
-// helper function to get next available UserID
-func getUserID(tx *sql.Tx) (int64, error) {
+// helper function to get next available BucketID
+func getBucketID(tx *sql.Tx) (int64, error) {
 	var err error
 	var tid int64
 	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "USERS", "user_id")
+		tid, err = LastInsertID(tx, "bucketS", "bucket_id")
 		tid += 1
 	} else {
 		tid, err = IncrementSequence(tx, "SEQ_FL")
 	}
 	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.users.getUserID")
+		return tid, Error(err, LastInsertErrorCode, "", "dbs.buckets.getBucketID")
 	}
 	return tid, nil
 }
 
-// Insert implementation of Users
-func (r *Users) Insert(tx *sql.Tx) error {
+// Insert implementation of Buckets
+func (r *Buckets) Insert(tx *sql.Tx) error {
 	var err error
-	if r.USER_ID == 0 {
-		userID, err := getUserID(tx)
+	if r.BUCKET_ID == 0 {
+		bucketID, err := getBucketID(tx)
 		if err != nil {
-			log.Println("unable to get userID", err)
-			return Error(err, ParametersErrorCode, "", "dbs.users.Insert")
+			log.Println("unable to get bucketID", err)
+			return Error(err, ParametersErrorCode, "", "dbs.buckets.Insert")
 		}
-		r.USER_ID = userID
+		r.BUCKET_ID = bucketID
 	}
 	// set defaults and validate the record
 	r.SetDefaults()
 	err = r.Validate()
 	if err != nil {
 		log.Println("unable to validate record", err)
-		return Error(err, ValidateErrorCode, "", "dbs.users.Insert")
+		return Error(err, ValidateErrorCode, "", "dbs.buckets.Insert")
 	}
 	// get SQL statement from static area
-	stm := getSQL("insert_user")
+	stm := getSQL("insert_bucket")
 	if utils.VERBOSE > 0 {
-		log.Printf("Insert Users record %+v", r)
+		log.Printf("Insert Buckets record %+v", r)
 	} else if utils.VERBOSE > 1 {
-		log.Printf("Insert Users\n%s\n%+v", stm, r)
+		log.Printf("Insert Buckets\n%s\n%+v", stm, r)
 	}
 	_, err = tx.Exec(
 		stm,
-		r.USER_ID,
-		r.LOGIN,
-		r.FIRST_NAME,
-		r.LAST_NAME,
-		r.PASSWORD,
+		r.BUCKET_ID,
+		r.BUCKET,
+		r.META_ID,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,
 		r.LAST_MODIFIED_BY)
 	if err != nil {
 		if utils.VERBOSE > 0 {
-			log.Println("unable to insert users, error", err)
+			log.Println("unable to insert buckets, error", err)
 		}
-		return Error(err, InsertErrorCode, "", "dbs.users.Insert")
+		return Error(err, InsertErrorCode, "", "dbs.buckets.Insert")
 	}
 	return nil
 }
 
-// Validate implementation of Users
-func (r *Users) Validate() error {
+// Validate implementation of Buckets
+func (r *Buckets) Validate() error {
 	if err := RecordValidator.Struct(*r); err != nil {
 		return DecodeValidatorError(r, err)
 	}
 	if matched := unixTimePattern.MatchString(fmt.Sprintf("%d", r.CREATION_DATE)); !matched {
 		msg := "invalid pattern for creation date"
-		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.users.Validate")
+		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.buckets.Validate")
 	}
 	if matched := unixTimePattern.MatchString(fmt.Sprintf("%d", r.LAST_MODIFICATION_DATE)); !matched {
 		msg := "invalid pattern for last modification date"
-		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.users.Validate")
+		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.buckets.Validate")
 	}
 	return nil
 }
 
-// SetDefaults implements set defaults for Users
-func (r *Users) SetDefaults() {
+// SetDefaults implements set defaults for Buckets
+func (r *Buckets) SetDefaults() {
 	if r.CREATE_BY == "" {
 		r.CREATE_BY = "Server"
 	}
@@ -160,13 +155,13 @@ func (r *Users) SetDefaults() {
 	}
 }
 
-// Decode implementation for Users
-func (r *Users) Decode(reader io.Reader) error {
+// Decode implementation for Buckets
+func (r *Buckets) Decode(reader io.Reader) error {
 	// init record with given data record
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		log.Println("fail to read data", err)
-		return Error(err, ReaderErrorCode, "", "dbs.users.Decode")
+		return Error(err, ReaderErrorCode, "", "dbs.buckets.Decode")
 	}
 	err = json.Unmarshal(data, &r)
 
@@ -174,7 +169,7 @@ func (r *Users) Decode(reader io.Reader) error {
 	//     err := decoder.Decode(&rec)
 	if err != nil {
 		log.Println("fail to decode data", err)
-		return Error(err, UnmarshalErrorCode, "", "dbs.users.Decode")
+		return Error(err, UnmarshalErrorCode, "", "dbs.buckets.Decode")
 	}
 	return nil
 }

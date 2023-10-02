@@ -20,11 +20,6 @@ type NameRequest struct {
 	Name string `json:"name"`
 }
 
-// UserHandler provides access to /users and /user/:name end-point
-func UserHandler(c *gin.Context) {
-	ApiHandler(c, "user")
-}
-
 // FileHandler provides access to /files and /file/:name end-point
 func FileHandler(c *gin.Context) {
 	ApiHandler(c, "file")
@@ -152,8 +147,6 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 		err = api.GetDataset()
 	} else if a == "file" {
 		err = api.GetFile()
-	} else if a == "user" {
-		err = api.GetUser()
 	} else {
 		err = dbs.NotImplementedApiErr
 	}
@@ -178,8 +171,6 @@ func DBSPostHandler(w http.ResponseWriter, r *http.Request, a string) {
 		err = api.InsertDataset()
 	} else if a == "file" {
 		err = api.InsertFile()
-	} else if a == "user" {
-		err = api.InsertUser()
 	} else {
 		err = dbs.NotImplementedApiErr
 	}
@@ -201,8 +192,6 @@ func DBSPutHandler(w http.ResponseWriter, r *http.Request, a string) {
 		err = api.UpdateDataset()
 	} else if a == "file" {
 		err = api.UpdateFile()
-	} else if a == "user" {
-		err = api.UpdateUser()
 	} else {
 		err = dbs.NotImplementedApiErr
 	}
@@ -224,8 +213,6 @@ func DBSDeleteHandler(w http.ResponseWriter, r *http.Request, a string) {
 		err = api.DeleteDataset()
 	} else if a == "file" {
 		err = api.DeleteFile()
-	} else if a == "user" {
-		err = api.DeleteUser()
 	} else {
 		err = dbs.NotImplementedApiErr
 	}

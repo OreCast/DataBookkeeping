@@ -19,6 +19,7 @@ type Files struct {
 	LOGICAL_FILE_NAME      string `json:"logical_file_name" validate:"required"`
 	IS_FILE_VALID          int64  `json:"is_file_valid" validate:"number"`
 	DATASET_ID             int64  `json:"dataset_id" validate:"number,gt=0"`
+	META_ID                string `json:"meta_id" validate:"required"`
 	CHECK_SUM              string `json:"check_sum" validate:"required"`
 	FILE_SIZE              int64  `json:"file_size" validate:"required,number,gt=0"`
 	EVENT_COUNT            int64  `json:"event_count" validate:"number"`
@@ -118,6 +119,7 @@ func (r *Files) Insert(tx *sql.Tx) error {
 		r.LOGICAL_FILE_NAME,
 		r.IS_FILE_VALID,
 		r.DATASET_ID,
+		r.META_ID,
 		r.CHECK_SUM,
 		r.FILE_SIZE,
 		r.EVENT_COUNT,

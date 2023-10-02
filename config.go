@@ -25,6 +25,9 @@ type Configuration struct {
 	MaxDBConnections   int    `json:"max_db_connections"`   // maximum number of DB connections
 	MaxIdleConnections int    `json:"max_idle_connections"` // maximum number of idle connections
 	StaticDir          string `json:"staticdir"`            // location of static directory
+
+	// orecast parts
+	AuthzClientId string `json:"authz_client_id"` // client id of OAuth
 }
 
 // Config variable represents configuration object

@@ -31,6 +31,7 @@ import (
 	"log"
 	"strings"
 
+	authz "github.com/OreCast/Authz/auth"
 	"github.com/OreCast/DataBookkeeping/dbs"
 	"github.com/OreCast/DataBookkeeping/utils"
 	"github.com/gin-gonic/gin"
@@ -52,27 +53,27 @@ func setupRouter() *gin.Engine {
 	// GET routes
 	r.GET("/datasets", DatasetHandler)
 	r.GET("/files", FileHandler)
-	r.GET("/users", UserHandler)
 
 	// individual routes
 	r.GET("/dataset/:name", DatasetHandler)
 	r.GET("/file/:name", FileHandler)
-	r.GET("/user/:name", UserHandler)
 
-	// POST routes
-	r.POST("/dataset", DatasetHandler)
-	r.POST("/file", FileHandler)
-	r.POST("/user", UserHandler)
+	// all POST/PUT/DELET methods ahould be authorized
+	authorized := r.Group("/")
+	authorized.Use(authz.TokenMiddleware(Config.AuthzClientId, Config.Verbose))
+	{
+		// POST routes
+		authorized.POST("/dataset", DatasetHandler)
+		authorized.POST("/file", FileHandler)
 
-	// PUT routes
-	r.PUT("/dataset/:name", DatasetHandler)
-	r.PUT("/file/:name", FileHandler)
-	r.PUT("/user/:name", UserHandler)
+		// PUT routes
+		authorized.PUT("/dataset/:name", DatasetHandler)
+		authorized.PUT("/file/:name", FileHandler)
 
-	// DELETE routes
-	r.DELETE("/dataset/:name", DatasetHandler)
-	r.DELETE("/file/:name", FileHandler)
-	r.DELETE("/user/:name", UserHandler)
+		// DELETE routes
+		authorized.DELETE("/dataset/:name", DatasetHandler)
+		authorized.DELETE("/file/:name", FileHandler)
+	}
 
 	return r
 }
