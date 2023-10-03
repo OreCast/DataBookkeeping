@@ -31,9 +31,9 @@ import (
 	"log"
 	"strings"
 
-	authz "github.com/OreCast/Authz/auth"
 	"github.com/OreCast/DataBookkeeping/dbs"
 	"github.com/OreCast/DataBookkeeping/utils"
+	authz "github.com/OreCast/common/authz"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
 
