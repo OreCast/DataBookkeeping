@@ -73,10 +73,11 @@ func ErrPropagate(api string) {
 
 // ErrPropagate2Channel helper function which can be used in goroutines as
 // ch := make(chan interface{})
-// go func() {
-//    defer ErrPropagate2Channel(api, ch)
-//    someFunction()
-// }()
+//
+//	go func() {
+//	   defer ErrPropagate2Channel(api, ch)
+//	   someFunction()
+//	}()
 func ErrPropagate2Channel(api string, ch chan interface{}) {
 	if err := recover(); err != nil {
 		log.Println("ERROR", api, "error", err, Stack())

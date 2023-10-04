@@ -60,7 +60,7 @@ func setupRouter() *gin.Engine {
 
 	// all POST/PUT/DELET methods ahould be authorized
 	authorized := r.Group("/")
-	authorized.Use(authz.TokenMiddleware(Config.AuthzClientId, Config.Verbose))
+	authorized.Use(authz.TokenMiddleware(_oreConfig.Authz.ClientId, _oreConfig.DataBookkeeping.WebServer.Verbose))
 	{
 		// POST routes
 		authorized.POST("/dataset", DatasetHandler)
@@ -90,8 +90,8 @@ func dbInit(dbtype, dburi string) (*sql.DB, error) {
 		log.Println("DB ping error", dberr)
 		return nil, dberr
 	}
-	db.SetMaxOpenConns(Config.MaxDBConnections)
-	db.SetMaxIdleConns(Config.MaxIdleConnections)
+	db.SetMaxOpenConns(_oreConfig.DataBookkeeping.MaxDBConnections)
+	db.SetMaxIdleConns(_oreConfig.DataBookkeeping.MaxIdleConnections)
 	// Disables connection pool for sqlite3. This enables some concurrency with sqlite3 databases
 	// See https://stackoverflow.com/questions/57683132/turning-off-connection-pool-for-go-http-client
 	// and https://sqlite.org/wal.html
@@ -102,7 +102,7 @@ func dbInit(dbtype, dburi string) (*sql.DB, error) {
 	return db, nil
 }
 
-func Server(configFile string) {
+func Server() {
 	// be verbose
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -110,16 +110,16 @@ func Server(configFile string) {
 	dbs.RecordValidator = validator.New()
 
 	// set database connection once
-	log.Println("parse Config.DBFile:", Config.DBFile)
-	dbtype, dburi, dbowner := dbs.ParseDBFile(Config.DBFile)
+	log.Println("parse Config.DBFile:", _oreConfig.DataBookkeeping.DBFile)
+	dbtype, dburi, dbowner := dbs.ParseDBFile(_oreConfig.DataBookkeeping.DBFile)
 	// for oci driver we know it is oracle backend
 	if strings.HasPrefix(dbtype, "oci") {
 		utils.ORACLE = true
 	}
 	log.Println("DBOWNER", dbowner)
 	// set static dir
-	utils.STATICDIR = Config.StaticDir
-	utils.VERBOSE = Config.Verbose
+	utils.STATICDIR = _oreConfig.DataBookkeeping.WebServer.StaticDir
+	utils.VERBOSE = _oreConfig.DataBookkeeping.WebServer.Verbose
 
 	// setup DBS
 	db, dberr := dbInit(dbtype, dburi)
@@ -134,7 +134,7 @@ func Server(configFile string) {
 	defer dbs.DB.Close()
 
 	r := setupRouter()
-	sport := fmt.Sprintf(":%d", Config.Port)
+	sport := fmt.Sprintf(":%d", _oreConfig.DataBookkeeping.WebServer.Port)
 	log.Printf("Start HTTP server %s", sport)
 	r.Run(sport)
 }

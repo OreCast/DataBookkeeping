@@ -32,6 +32,7 @@ type Files struct {
 }
 
 // Files DBS API
+//
 //gocyclo:ignore
 func (a *API) GetFile() error {
 	var args []interface{}

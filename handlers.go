@@ -156,7 +156,6 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 	}
 }
 
-//
 // POST handler
 //
 // DBSPostHandler is a generic handler to call DBS Post APIs

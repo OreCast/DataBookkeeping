@@ -27,6 +27,7 @@ type Users struct {
 }
 
 // Users DBS API
+//
 //gocyclo:ignore
 func (a *API) GetUser() error {
 	var args []interface{}

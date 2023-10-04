@@ -14,7 +14,12 @@ import (
 
 	_ "expvar"         // to be used for monitoring, see https://github.com/divan/expvarmon
 	_ "net/http/pprof" // profiler, see https://golang.org/pkg/net/http/pprof/
+
+	oreConfig "github.com/OreCast/common/config"
 )
+
+// orecast configuration
+var _oreConfig *oreConfig.OreCastConfig
 
 func info() string {
 	goVersion := runtime.Version()
@@ -26,15 +31,16 @@ func main() {
 	var version bool
 	flag.BoolVar(&version, "version", false, "Show version")
 	var config string
-	flag.StringVar(&config, "config", "server.json", "server config JSON file")
+	flag.StringVar(&config, "config", "", "server config JSON file")
 	flag.Parse()
 	if version {
 		fmt.Println("server version:", info())
 		return
 	}
-	err := parseConfig(config)
+	oConfig, err := oreConfig.ParseConfig(config)
 	if err != nil {
-		log.Fatalf("unable to parse config %s, error %v\n", config, err)
+		log.Fatal("ERROR", err)
 	}
-	Server(config)
+	_oreConfig = &oConfig
+	Server()
 }

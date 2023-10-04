@@ -204,8 +204,9 @@ func lfnList(v string) []string {
 	return lfns
 }
 
-//gocyclo:ignore
 // helper function to validate string parameters
+//
+//gocyclo:ignore
 func strType(key string, val interface{}) error {
 	var v string
 	switch vvv := val.(type) {

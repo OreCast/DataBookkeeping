@@ -24,6 +24,7 @@ type Buckets struct {
 }
 
 // Buckets DBS API
+//
 //gocyclo:ignore
 func (a *API) GetBucket() error {
 	var args []interface{}
