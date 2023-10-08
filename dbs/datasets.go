@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/OreCast/DataBookkeeping/utils"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Datasets represents Datasets DBS DB table
@@ -16,10 +17,24 @@ type Datasets struct {
 	DATASET                string `json:"dataset" validate:"required"`
 	BUCKET_ID              int64  `json:"bucket_id" validate:"required"`
 	META_ID                string `json:"meta_id" validate:"required"`
+	SITE_ID                int64  `json:"site_id" validate:"required"`
+	PROCESSING_ID          int64  `json:"processing_id" validate:"required"`
+	PARENT_ID              int64  `json:"parent_id" validate:"required"`
 	CREATION_DATE          int64  `json:"creation_date" validate:"required,number"`
 	CREATE_BY              string `json:"create_by" validate:"required"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number"`
 	LAST_MODIFIED_BY       string `json:"last_modified_by" validate:"required"`
+}
+
+// DatasetRecord represents input dataset record from HTTP request
+type DatasetRecord struct {
+	Dataset    string   `json:"dataset" validate:"required"`
+	Bucket     string   `json:"bucket" validate:"required"`
+	Site       string   `json:"site" validate:"required"`
+	Processing string   `json:"processing" validate:"required"`
+	Parent     string   `json:"parent_dataset" validate:"required"`
+	MetaId     string   `json:"meta_id" validate:"required"`
+	Files      []string `json:"files" validate:"required"`
 }
 
 // Datasets API
@@ -43,17 +58,22 @@ func (a *API) GetDataset() error {
 		"dataset_id",
 		"dataset",
 		"meta_id",
+		"site_id",
+		"processing_id",
 		"creation_date",
 		"create_by",
 		"last_modification_date",
 		"last_modified_by"}
 	vals := []interface{}{
-		new(sql.NullInt64),
-		new(sql.NullString),
-		new(sql.NullFloat64),
-		new(sql.NullString),
-		new(sql.NullFloat64),
-		new(sql.NullString)}
+		new(sql.NullInt64),   // dataset_id
+		new(sql.NullString),  // dataset
+		new(sql.NullFloat64), // meta_id
+		new(sql.NullFloat64), // site_id
+		new(sql.NullFloat64), // processing_id
+		new(sql.NullFloat64), // creation_date
+		new(sql.NullString),  // create_by
+		new(sql.NullFloat64), // last_modification_date
+		new(sql.NullString)}  //last_modified_by
 	stm = WhereClause(stm, conds)
 
 	// use generic query API to fetch the results from DB
@@ -67,7 +87,37 @@ func (a *API) GetDataset() error {
 func (a *API) InsertDataset() error {
 	// the API provides Reader which will be used by Decode function to load the HTTP payload
 	// and cast it to Datasets data structure
-	return insertRecord(&Datasets{}, a.Reader)
+
+	// TODO:
+	// parse incoming DatasetRequest
+	// insert site, bucket, parent, processing, files
+	//     var siteId, bucketId, parentId, processingId int64
+	//     var cby, mby string
+	//     var cdate, mdate int64
+
+	// read given input
+	data, err := io.ReadAll(a.Reader)
+	if err != nil {
+		log.Println("fail to read data", err)
+		return Error(err, ReaderErrorCode, "", "dbs.blocks.InsertBlocks")
+	}
+	rec := DatasetRecord{}
+	if a.ContentType == "application/json" {
+		err = json.Unmarshal(data, &rec)
+	} else if a.ContentType == "application/yaml" {
+		err = yaml.Unmarshal(data, &rec)
+	} else {
+		log.Println("Parser dataset record using default application/json mtime")
+		err = json.Unmarshal(data, &rec)
+	}
+	if err != nil {
+		log.Println("fail to decode data", err)
+		return Error(err, UnmarshalErrorCode, "", "dbs.blocks.InsertBlocks")
+	}
+	log.Printf("### input DatasetRecord %+v", rec)
+
+	record := Datasets{CREATE_BY: a.CreateBy, LAST_MODIFIED_BY: a.CreateBy}
+	return insertRecord(&record, a.Reader)
 }
 func (a *API) UpdateDataset() error {
 	return nil
@@ -88,9 +138,9 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 			tid, err = IncrementSequence(tx, "SEQ_DS")
 			r.DATASET_ID = tid
 		}
-		if err != nil {
-			return Error(err, LastInsertErrorCode, "", "dbs.datasets.Insert")
-		}
+	}
+	if err != nil {
+		return Error(err, LastInsertErrorCode, "", "dbs.datasets.Insert")
 	}
 	// set defaults and validate the record
 	r.SetDefaults()
@@ -104,11 +154,16 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 	if utils.VERBOSE > 0 {
 		log.Printf("Insert Datasets\n%s\n%+v", stm, r)
 	}
+	// make final SQL statement to insert dataset record
 	_, err = tx.Exec(
 		stm,
 		r.DATASET_ID,
 		r.DATASET,
 		r.META_ID,
+		r.BUCKET_ID,
+		r.SITE_ID,
+		r.PROCESSING_ID,
+		r.PARENT_ID,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,
