@@ -29,7 +29,7 @@ type Datasets struct {
 // DatasetRecord represents input dataset record from HTTP request
 type DatasetRecord struct {
 	Dataset    string   `json:"dataset" validate:"required"`
-	Bucket     string   `json:"bucket" validate:"required"`
+	Buckets    []string `json:"buckets" validate:"required"`
 	Site       string   `json:"site" validate:"required"`
 	Processing string   `json:"processing" validate:"required"`
 	Parent     string   `json:"parent_dataset" validate:"required"`
@@ -88,13 +88,6 @@ func (a *API) InsertDataset() error {
 	// the API provides Reader which will be used by Decode function to load the HTTP payload
 	// and cast it to Datasets data structure
 
-	// TODO:
-	// parse incoming DatasetRequest
-	// insert site, bucket, parent, processing, files
-	//     var siteId, bucketId, parentId, processingId int64
-	//     var cby, mby string
-	//     var cdate, mdate int64
-
 	// read given input
 	data, err := io.ReadAll(a.Reader)
 	if err != nil {
@@ -115,9 +108,16 @@ func (a *API) InsertDataset() error {
 		return Error(err, UnmarshalErrorCode, "", "dbs.blocks.InsertBlocks")
 	}
 	log.Printf("### input DatasetRecord %+v", rec)
+	// TODO:
+	// parse incoming DatasetRequest
+	// insert site, bucket, parent, processing, files
 
-	record := Datasets{CREATE_BY: a.CreateBy, LAST_MODIFIED_BY: a.CreateBy}
-	return insertRecord(&record, a.Reader)
+	record := Datasets{
+		DATASET:          rec.Dataset,
+		CREATE_BY:        a.CreateBy,
+		LAST_MODIFIED_BY: a.CreateBy,
+	}
+	return insertRecord(&record, nil)
 }
 func (a *API) UpdateDataset() error {
 	return nil
@@ -150,7 +150,7 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 		return Error(err, ValidateErrorCode, "", "dbs.datasets.Insert")
 	}
 	// get SQL statement from static area
-	stm := getSQL("insert_datasets")
+	stm := getSQL("insert_dataset")
 	if utils.VERBOSE > 0 {
 		log.Printf("Insert Datasets\n%s\n%+v", stm, r)
 	}
@@ -159,8 +159,8 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 		stm,
 		r.DATASET_ID,
 		r.DATASET,
-		r.META_ID,
 		r.BUCKET_ID,
+		r.META_ID,
 		r.SITE_ID,
 		r.PROCESSING_ID,
 		r.PARENT_ID,
@@ -219,6 +219,9 @@ func (r *Datasets) SetDefaults() {
 
 // Decode implementation for Datasets
 func (r *Datasets) Decode(reader io.Reader) error {
+	if reader == nil {
+		return nil
+	}
 	// init record with given data record
 	data, err := io.ReadAll(reader)
 	if err != nil {

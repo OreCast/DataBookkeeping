@@ -6,7 +6,7 @@ CREATE TABLE "PROCESSINGS" (
     "PROCESSING_ID" INTEGER,
     "PROCESSING" VARCHAR2(700) NOT NULL UNIQUE,
     "CREATION_DATE" INTEGER,
-    "CREATE_BY" VARCHAR2(500),
+    "CREATE_BY" VARCHAR2(500)
 );
 --------------------------------------------------------
 --  DDL for Table PARENTS
@@ -16,7 +16,7 @@ CREATE TABLE "PARENTS" (
     "PARENT_ID" INTEGER,
     "PARENT" VARCHAR2(700) NOT NULL UNIQUE,
     "CREATION_DATE" INTEGER,
-    "CREATE_BY" VARCHAR2(500),
+    "CREATE_BY" VARCHAR2(500)
 );
 --------------------------------------------------------
 --  DDL for Table SITES
@@ -26,7 +26,7 @@ CREATE TABLE "SITES" (
     "SITE_ID" INTEGER,
     "SITE" VARCHAR2(700) NOT NULL UNIQUE,
     "CREATION_DATE" INTEGER,
-    "CREATE_BY" VARCHAR2(500),
+    "CREATE_BY" VARCHAR2(500)
 );
 --------------------------------------------------------
 --  DDL for Table BUCKETS
@@ -50,7 +50,6 @@ CREATE TABLE "DATASETS" (
     "DATASET" VARCHAR2(700) NOT NULL UNIQUE,
     "BUCKET_ID" INTEGER,
     "META_ID" VARCHAR2(700) NOT NULL UNIQUE,
-    "BUCKET_ID" INTEGER,
     "SITE_ID" INTEGER,
     "PROCESSING_ID" INTEGER,
     "PARENT_ID" INTEGER,
