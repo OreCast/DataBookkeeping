@@ -1035,3 +1035,20 @@ func getInt64(record Record, attr string) int64 {
 	log.Printf("WARNING: fail to extract %s from DBS record %+v", attr, record)
 	return 0
 }
+
+// helper function to get next available SiteID
+func getTableId(tx *sql.Tx, table, tableId string) (int64, error) {
+	var err error
+	var tid int64
+	if DBOWNER == "sqlite" {
+		tid, err = LastInsertID(tx, table, tableId)
+		tid += 1
+	} else {
+		tid, err = IncrementSequence(tx, "SEQ_FL")
+	}
+	if err != nil {
+		msg := fmt.Sprintf("dbs.getId(tx, %s, %s)", table, tableId)
+		return tid, Error(err, LastInsertErrorCode, "", msg)
+	}
+	return tid, nil
+}

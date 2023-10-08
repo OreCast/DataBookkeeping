@@ -108,41 +108,79 @@ func (a *API) InsertDataset() error {
 		return Error(err, UnmarshalErrorCode, "", "dbs.blocks.InsertBlocks")
 	}
 	log.Printf("### input DatasetRecord %+v", rec)
-	// TODO:
-	// parse incoming DatasetRequest
-	// insert site, bucket, parent, processing, files
-	site := Sites{
-		SITE: rec.Site,
-	}
-	err = insertRecord(&site, nil)
-	if err != nil {
-		log.Println("ERROR", err)
-	}
-	for _, b := range rec.Buckets {
-		bucket := Buckets{
-			BUCKET: b,
-		}
-		err = insertRecord(&bucket, nil)
-		if err != nil {
-			log.Println("ERROR", err)
-		}
-	}
-	processing := Processing{
-		PROCESSING: rec.Processing,
-	}
-	err = insertRecord(&processing, nil)
-	if err != nil {
-		log.Println("ERROR", err)
-	}
 
+	// parse incoming DatasetRequest and insert relationships, e.g.
+	// site, bucket, parent, processing, files
 	record := Datasets{
 		DATASET:          rec.Dataset,
 		META_ID:          rec.MetaId,
 		CREATE_BY:        a.CreateBy,
 		LAST_MODIFIED_BY: a.CreateBy,
 	}
-	return insertRecord(&record, nil)
+	err = insertParts(&rec, &record)
+	if err != nil {
+		return Error(err, CommitErrorCode, "", "dbs.insertRecord")
+	}
+	return nil
 }
+
+// helper function to insert parts of the dataset relationships
+func insertParts(rec *DatasetRecord, record *Datasets) error {
+	// start transaction
+	tx, err := DB.Begin()
+	if err != nil {
+		return Error(err, TransactionErrorCode, "", "dbs.insertRecord")
+	}
+	defer tx.Rollback()
+
+	site := Sites{
+		SITE: rec.Site,
+	}
+	if err = site.Insert(tx); err != nil {
+		return err
+	}
+	for _, b := range rec.Buckets {
+		bucket := Buckets{
+			BUCKET:  b,
+			META_ID: rec.MetaId,
+		}
+		if err = bucket.Insert(tx); err != nil {
+			return err
+		}
+	}
+	processing := Processing{
+		PROCESSING: rec.Processing,
+	}
+	if err = processing.Insert(tx); err != nil {
+		return err
+	}
+	if rid, err := getTableId(tx, "SITES", "SITE_ID"); err != nil {
+		return err
+	} else {
+		record.SITE_ID = rid
+	}
+	if rid, err := getTableId(tx, "BUCKETS", "BUCKET_ID"); err != nil {
+		return err
+	} else {
+		record.BUCKET_ID = rid
+	}
+	if rid, err := getTableId(tx, "PROCESSING", "PROCESSING_ID"); err != nil {
+		return err
+	} else {
+		record.PROCESSING_ID = rid
+	}
+	if rid, err := getTableId(tx, "PARENTS", "PARENT_ID"); err != nil {
+		return err
+	} else {
+		record.PARENT_ID = rid
+	}
+	if err = record.Insert(tx); err != nil {
+		return err
+	}
+	err = tx.Commit()
+	return err
+}
+
 func (a *API) UpdateDataset() error {
 	return nil
 }

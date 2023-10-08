@@ -64,27 +64,11 @@ func (a *API) DeleteParent() error {
 	return nil
 }
 
-// helper function to get next available ParentID
-func getParentID(tx *sql.Tx) (int64, error) {
-	var err error
-	var tid int64
-	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "parentS", "parent_id")
-		tid += 1
-	} else {
-		tid, err = IncrementSequence(tx, "SEQ_FL")
-	}
-	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.parents.getParentID")
-	}
-	return tid, nil
-}
-
 // Insert implementation of Parents
 func (r *Parents) Insert(tx *sql.Tx) error {
 	var err error
 	if r.PARENT_ID == 0 {
-		parentID, err := getParentID(tx)
+		parentID, err := getTableId(tx, "PARENTS", "PARENT_ID")
 		if err != nil {
 			log.Println("unable to get parentID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.parents.Insert")

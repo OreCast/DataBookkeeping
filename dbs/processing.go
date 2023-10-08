@@ -64,27 +64,11 @@ func (a *API) DeleteProcessing() error {
 	return nil
 }
 
-// helper function to get next available ProcessingID
-func getProcessingID(tx *sql.Tx) (int64, error) {
-	var err error
-	var tid int64
-	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "PROCESSING", "PROCESSING_id")
-		tid += 1
-	} else {
-		tid, err = IncrementSequence(tx, "SEQ_FL")
-	}
-	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.processing.getProcessingID")
-	}
-	return tid, nil
-}
-
 // Insert implementation of Processing
 func (r *Processing) Insert(tx *sql.Tx) error {
 	var err error
 	if r.PROCESSING_ID == 0 {
-		processingID, err := getProcessingID(tx)
+		processingID, err := getTableId(tx, "PROCESSING", "PROCESSING_ID")
 		if err != nil {
 			log.Println("unable to get processingID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.processing.Insert")

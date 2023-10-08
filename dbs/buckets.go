@@ -65,27 +65,11 @@ func (a *API) DeleteBucket() error {
 	return nil
 }
 
-// helper function to get next available BucketID
-func getBucketID(tx *sql.Tx) (int64, error) {
-	var err error
-	var tid int64
-	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "bucketS", "bucket_id")
-		tid += 1
-	} else {
-		tid, err = IncrementSequence(tx, "SEQ_FL")
-	}
-	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.buckets.getBucketID")
-	}
-	return tid, nil
-}
-
 // Insert implementation of Buckets
 func (r *Buckets) Insert(tx *sql.Tx) error {
 	var err error
 	if r.BUCKET_ID == 0 {
-		bucketID, err := getBucketID(tx)
+		bucketID, err := getTableId(tx, "BUCKETS", "BUCKET_ID")
 		if err != nil {
 			log.Println("unable to get bucketID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.buckets.Insert")

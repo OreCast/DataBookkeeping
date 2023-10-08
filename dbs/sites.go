@@ -64,27 +64,11 @@ func (a *API) DeleteSite() error {
 	return nil
 }
 
-// helper function to get next available SiteID
-func getSiteID(tx *sql.Tx) (int64, error) {
-	var err error
-	var tid int64
-	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "siteS", "site_id")
-		tid += 1
-	} else {
-		tid, err = IncrementSequence(tx, "SEQ_FL")
-	}
-	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.sites.getSiteID")
-	}
-	return tid, nil
-}
-
 // Insert implementation of Sites
 func (r *Sites) Insert(tx *sql.Tx) error {
 	var err error
 	if r.SITE_ID == 0 {
-		siteID, err := getSiteID(tx)
+		siteID, err := getTableId(tx, "SITES", "SITE_ID")
 		if err != nil {
 			log.Println("unable to get siteID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.sites.Insert")
