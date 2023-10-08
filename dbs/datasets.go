@@ -114,6 +114,7 @@ func (a *API) InsertDataset() error {
 
 	record := Datasets{
 		DATASET:          rec.Dataset,
+		META_ID:          rec.MetaId,
 		CREATE_BY:        a.CreateBy,
 		LAST_MODIFIED_BY: a.CreateBy,
 	}
