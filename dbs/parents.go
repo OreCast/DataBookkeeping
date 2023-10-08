@@ -12,33 +12,29 @@ import (
 	"github.com/OreCast/DataBookkeeping/utils"
 )
 
-// Users represents Users DBS DB table
-type Users struct {
-	USER_ID                int64  `json:"user_id"`
-	LOGIN                  string `json:"login" validate:"required"`
-	PASSWORD               string `json:"password" validate:"required"`
-	FIRST_NAME             string `json:"first_name"`
-	LAST_NAME              string `json:"last_name"`
-	EMAIL                  string `json:"email" validate:"required"`
+// Parents represents Parents DBS DB table
+type Parents struct {
+	PARENT_ID              int64  `json:"parent_id"`
+	PARENT                 string `json:"parent" validate:"required"`
 	CREATION_DATE          int64  `json:"creation_date"`
 	CREATE_BY              string `json:"create_by"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date"`
 	LAST_MODIFIED_BY       string `json:"last_modified_by"`
 }
 
-// Users DBS API
+// Parents DBS API
 //
 //gocyclo:ignore
-func (a *API) GetUser() error {
+func (a *API) GetParent() error {
 	var args []interface{}
 	var conds []string
 	var err error
 
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER
-	stm, err := LoadTemplateSQL("select_user", tmpl)
+	stm, err := LoadTemplateSQL("select_parent", tmpl)
 	if err != nil {
-		return Error(err, LoadErrorCode, "", "dbs.users.Users")
+		return Error(err, LoadErrorCode, "", "dbs.parents.Parents")
 	}
 
 	stm = WhereClause(stm, conds)
@@ -46,107 +42,104 @@ func (a *API) GetUser() error {
 	// use generic query API to fetch the results from DB
 	err = executeAll(a.Writer, a.Separator, stm, args...)
 	if err != nil {
-		return Error(err, QueryErrorCode, "", "dbs.users.Users")
+		return Error(err, QueryErrorCode, "", "dbs.parents.Parents")
 	}
 	return nil
 }
 
-// InsertUser inserts user record into DB
-func (a *API) InsertUser() error {
+// InsertParent inserts parent record into DB
+func (a *API) InsertParent() error {
 	// the API provides Reader which will be used by Decode function to load the HTTP payload
-	// and cast it to Users data structure
-	return insertRecord(&Users{}, a.Reader)
+	// and cast it to Parents data structure
+	return insertRecord(&Parents{}, a.Reader)
 }
 
-// UpdateUser inserts user record in DB
-func (a *API) UpdateUser() error {
+// UpdateParent inserts parent record in DB
+func (a *API) UpdateParent() error {
 	return nil
 }
 
-// DeleteUser deletes user record in DB
-func (a *API) DeleteUser() error {
+// DeleteParent deletes parent record in DB
+func (a *API) DeleteParent() error {
 	return nil
 }
 
-// helper function to get next available UserID
-func getUserID(tx *sql.Tx) (int64, error) {
+// helper function to get next available ParentID
+func getParentID(tx *sql.Tx) (int64, error) {
 	var err error
 	var tid int64
 	if DBOWNER == "sqlite" {
-		tid, err = LastInsertID(tx, "USERS", "user_id")
+		tid, err = LastInsertID(tx, "parentS", "parent_id")
 		tid += 1
 	} else {
 		tid, err = IncrementSequence(tx, "SEQ_FL")
 	}
 	if err != nil {
-		return tid, Error(err, LastInsertErrorCode, "", "dbs.users.getUserID")
+		return tid, Error(err, LastInsertErrorCode, "", "dbs.parents.getParentID")
 	}
 	return tid, nil
 }
 
-// Insert implementation of Users
-func (r *Users) Insert(tx *sql.Tx) error {
+// Insert implementation of Parents
+func (r *Parents) Insert(tx *sql.Tx) error {
 	var err error
-	if r.USER_ID == 0 {
-		userID, err := getUserID(tx)
+	if r.PARENT_ID == 0 {
+		parentID, err := getParentID(tx)
 		if err != nil {
-			log.Println("unable to get userID", err)
-			return Error(err, ParametersErrorCode, "", "dbs.users.Insert")
+			log.Println("unable to get parentID", err)
+			return Error(err, ParametersErrorCode, "", "dbs.parents.Insert")
 		}
-		r.USER_ID = userID
+		r.PARENT_ID = parentID
 	}
 	// set defaults and validate the record
 	r.SetDefaults()
 	err = r.Validate()
 	if err != nil {
 		log.Println("unable to validate record", err)
-		return Error(err, ValidateErrorCode, "", "dbs.users.Insert")
+		return Error(err, ValidateErrorCode, "", "dbs.parents.Insert")
 	}
 	// get SQL statement from static area
-	stm := getSQL("insert_user")
+	stm := getSQL("insert_parent")
 	if utils.VERBOSE > 0 {
-		log.Printf("Insert Users record %+v", r)
+		log.Printf("Insert Parents record %+v", r)
 	} else if utils.VERBOSE > 1 {
-		log.Printf("Insert Users\n%s\n%+v", stm, r)
+		log.Printf("Insert Parents\n%s\n%+v", stm, r)
 	}
 	_, err = tx.Exec(
 		stm,
-		r.USER_ID,
-		r.LOGIN,
-		r.FIRST_NAME,
-		r.LAST_NAME,
-		r.PASSWORD,
+		r.PARENT_ID,
+		r.PARENT,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,
 		r.LAST_MODIFIED_BY)
 	if err != nil {
 		if utils.VERBOSE > 0 {
-			log.Println("unable to insert users, error", err)
+			log.Println("unable to insert parents, error", err)
 		}
-		return Error(err, InsertErrorCode, "", "dbs.users.Insert")
+		return Error(err, InsertErrorCode, "", "dbs.parents.Insert")
 	}
 	return nil
 }
 
-// Validate implementation of Users
-func (r *Users) Validate() error {
+// Validate implementation of Parents
+func (r *Parents) Validate() error {
 	if err := RecordValidator.Struct(*r); err != nil {
 		return DecodeValidatorError(r, err)
 	}
 	if matched := unixTimePattern.MatchString(fmt.Sprintf("%d", r.CREATION_DATE)); !matched {
 		msg := "invalid pattern for creation date"
-		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.users.Validate")
+		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.parents.Validate")
 	}
 	if matched := unixTimePattern.MatchString(fmt.Sprintf("%d", r.LAST_MODIFICATION_DATE)); !matched {
 		msg := "invalid pattern for last modification date"
-		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.users.Validate")
+		return Error(InvalidParamErr, PatternErrorCode, msg, "dbs.parents.Validate")
 	}
 	return nil
 }
 
-// SetDefaults implements set defaults for Users
-func (r *Users) SetDefaults() {
+// SetDefaults implements set defaults for Parents
+func (r *Parents) SetDefaults() {
 	if r.CREATE_BY == "" {
 		r.CREATE_BY = "Server"
 	}
@@ -161,13 +154,13 @@ func (r *Users) SetDefaults() {
 	}
 }
 
-// Decode implementation for Users
-func (r *Users) Decode(reader io.Reader) error {
+// Decode implementation for Parents
+func (r *Parents) Decode(reader io.Reader) error {
 	// init record with given data record
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		log.Println("fail to read data", err)
-		return Error(err, ReaderErrorCode, "", "dbs.users.Decode")
+		return Error(err, ReaderErrorCode, "", "dbs.parents.Decode")
 	}
 	err = json.Unmarshal(data, &r)
 
@@ -175,7 +168,7 @@ func (r *Users) Decode(reader io.Reader) error {
 	//     err := decoder.Decode(&rec)
 	if err != nil {
 		log.Println("fail to decode data", err)
-		return Error(err, UnmarshalErrorCode, "", "dbs.users.Decode")
+		return Error(err, UnmarshalErrorCode, "", "dbs.parents.Decode")
 	}
 	return nil
 }

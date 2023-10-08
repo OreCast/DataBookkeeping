@@ -22,8 +22,6 @@ type Files struct {
 	META_ID                string `json:"meta_id" validate:"required"`
 	CHECK_SUM              string `json:"check_sum" validate:"required"`
 	FILE_SIZE              int64  `json:"file_size" validate:"required,number,gt=0"`
-	EVENT_COUNT            int64  `json:"event_count" validate:"number"`
-	ADLER32                string `json:"adler32" validate:"required"`
 	MD5                    string `json:"md5"`
 	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
 	CREATE_BY              string `json:"create_by" validate:"required"`
@@ -108,7 +106,7 @@ func (r *Files) Insert(tx *sql.Tx) error {
 		return Error(err, ValidateErrorCode, "", "dbs.files.Insert")
 	}
 	// get SQL statement from static area
-	stm := getSQL("insert_files")
+	stm := getSQL("insert_file")
 	if utils.VERBOSE > 0 {
 		log.Printf("Insert Files file_id=%d lfn=%s", r.FILE_ID, r.LOGICAL_FILE_NAME)
 	} else if utils.VERBOSE > 1 {
@@ -123,8 +121,6 @@ func (r *Files) Insert(tx *sql.Tx) error {
 		r.META_ID,
 		r.CHECK_SUM,
 		r.FILE_SIZE,
-		r.EVENT_COUNT,
-		r.ADLER32,
 		r.MD5,
 		r.CREATION_DATE,
 		r.CREATE_BY,

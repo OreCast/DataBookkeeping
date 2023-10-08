@@ -111,6 +111,29 @@ func (a *API) InsertDataset() error {
 	// TODO:
 	// parse incoming DatasetRequest
 	// insert site, bucket, parent, processing, files
+	site := Sites{
+		SITE: rec.Site,
+	}
+	err = insertRecord(&site, nil)
+	if err != nil {
+		log.Println("ERROR", err)
+	}
+	for _, b := range rec.Buckets {
+		bucket := Buckets{
+			BUCKET: b,
+		}
+		err = insertRecord(&bucket, nil)
+		if err != nil {
+			log.Println("ERROR", err)
+		}
+	}
+	processing := Processing{
+		PROCESSING: rec.Processing,
+	}
+	err = insertRecord(&processing, nil)
+	if err != nil {
+		log.Println("ERROR", err)
+	}
 
 	record := Datasets{
 		DATASET:          rec.Dataset,
