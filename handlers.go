@@ -68,10 +68,11 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 		//             return nil, err
 		//         }
 		api = &dbs.API{
-			Writer:    w,
-			Params:    params,
-			Separator: sep,
-			Api:       a,
+			Writer:      w,
+			Params:      params,
+			Separator:   sep,
+			Api:         a,
+			ContentType: r.Header.Get("Content-Type"),
 		}
 	} else { // all other HTTP requests POST/PUT may contain payload
 
@@ -114,12 +115,13 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 			body = ioutil.NopCloser(bytes.NewBuffer(data))
 		}
 		api = &dbs.API{
-			Reader:    body,
-			Writer:    w,
-			Params:    params,
-			Separator: sep,
-			CreateBy:  cby,
-			Api:       a,
+			Reader:      body,
+			Writer:      w,
+			Params:      params,
+			Separator:   sep,
+			CreateBy:    cby,
+			Api:         a,
+			ContentType: r.Header.Get("Content-Type"),
 		}
 	}
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
