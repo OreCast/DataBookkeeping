@@ -10,7 +10,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/prometheus/procfs v0.12.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

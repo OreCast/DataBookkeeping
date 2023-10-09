@@ -8,7 +8,6 @@ import (
 	"log"
 
 	"github.com/OreCast/DataBookkeeping/utils"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Datasets represents Datasets DBS DB table
@@ -91,27 +90,20 @@ func (a *API) InsertDataset() error {
 	data, err := io.ReadAll(a.Reader)
 	if err != nil {
 		log.Println("fail to read data", err)
-		return Error(err, ReaderErrorCode, "", "dbs.blocks.InsertBlocks")
+		return Error(err, ReaderErrorCode, "", "dbs.datasets.InsertDataset")
 	}
 	rec := DatasetRecord{}
 	if a.ContentType == "application/json" {
 		err = json.Unmarshal(data, &rec)
-	} else if a.ContentType == "application/x-yaml" ||
-		a.ContentType == "application/yaml" ||
-		a.ContentType == "application/x-yml" ||
-		a.ContentType == "application/yml" ||
-		a.ContentType == "text/x-yaml" ||
-		a.ContentType == "text/yaml" ||
-		a.ContentType == "text/x-yml" ||
-		a.ContentType == "text/yml" {
-		err = yaml.Unmarshal(data, &rec)
 	} else {
 		log.Println("Parser dataset record using default application/json mtime")
 		err = json.Unmarshal(data, &rec)
 	}
 	if err != nil {
+		log.Println("reading", a.ContentType)
+		log.Println("reading data", string(data))
 		log.Println("fail to decode data", err)
-		return Error(err, UnmarshalErrorCode, "", "dbs.blocks.InsertBlocks")
+		return Error(err, UnmarshalErrorCode, "", "dbs.datasets.InsertDataset")
 	}
 	log.Printf("### input DatasetRecord %+v", rec)
 
