@@ -17,6 +17,7 @@ type Buckets struct {
 	BUCKET_ID              int64  `json:"bucket_id"`
 	BUCKET                 string `json:"bucket" validate:"required"`
 	META_ID                string `json:"meta_id" validate:"required"`
+	DATASET_ID             int64  `json:"dataset_id" validate:"required"`
 	CREATION_DATE          int64  `json:"creation_date"`
 	CREATE_BY              string `json:"create_by"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date"`
@@ -69,7 +70,7 @@ func (a *API) DeleteBucket() error {
 func (r *Buckets) Insert(tx *sql.Tx) error {
 	var err error
 	if r.BUCKET_ID == 0 {
-		bucketID, err := getTableId(tx, "BUCKETS", "BUCKET_ID")
+		bucketID, err := getNextId(tx, "BUCKETS", "BUCKET_ID")
 		if err != nil {
 			log.Println("unable to get bucketID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.buckets.Insert")
@@ -95,6 +96,7 @@ func (r *Buckets) Insert(tx *sql.Tx) error {
 		r.BUCKET_ID,
 		r.BUCKET,
 		r.META_ID,
+		r.DATASET_ID,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,

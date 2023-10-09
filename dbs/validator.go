@@ -44,7 +44,7 @@ var intParameters = []string{
 	"max_cdate",
 	"min_ldate",
 	"max_ldate",
-	"datset_id",
+	"dataset_id",
 	"prep_id",
 }
 

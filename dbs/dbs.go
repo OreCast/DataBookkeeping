@@ -1037,7 +1037,7 @@ func getInt64(record Record, attr string) int64 {
 }
 
 // helper function to get next available SiteID
-func getTableId(tx *sql.Tx, table, tableId string) (int64, error) {
+func getNextId(tx *sql.Tx, table, tableId string) (int64, error) {
 	var err error
 	var tid int64
 	if DBOWNER == "sqlite" {

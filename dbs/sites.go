@@ -68,7 +68,7 @@ func (a *API) DeleteSite() error {
 func (r *Sites) Insert(tx *sql.Tx) error {
 	var err error
 	if r.SITE_ID == 0 {
-		siteID, err := getTableId(tx, "SITES", "SITE_ID")
+		siteID, err := getNextId(tx, "SITES", "SITE_ID")
 		if err != nil {
 			log.Println("unable to get siteID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.sites.Insert")

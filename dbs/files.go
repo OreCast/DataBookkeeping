@@ -20,9 +20,6 @@ type Files struct {
 	IS_FILE_VALID          int64  `json:"is_file_valid" validate:"number"`
 	DATASET_ID             int64  `json:"dataset_id" validate:"number,gt=0"`
 	META_ID                string `json:"meta_id" validate:"required"`
-	CHECK_SUM              string `json:"check_sum" validate:"required"`
-	FILE_SIZE              int64  `json:"file_size" validate:"required,number,gt=0"`
-	MD5                    string `json:"md5"`
 	CREATION_DATE          int64  `json:"creation_date" validate:"required,number,gt=0"`
 	CREATE_BY              string `json:"create_by" validate:"required"`
 	LAST_MODIFICATION_DATE int64  `json:"last_modification_date" validate:"required,number,gt=0"`
@@ -75,7 +72,7 @@ func (a *API) DeleteFile() error {
 func (r *Files) Insert(tx *sql.Tx) error {
 	var err error
 	if r.FILE_ID == 0 {
-		fileID, err := getTableId(tx, "FILES", "FILE_ID")
+		fileID, err := getNextId(tx, "FILES", "FILE_ID")
 		if err != nil {
 			log.Println("unable to get fileID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.files.Insert")
@@ -103,9 +100,6 @@ func (r *Files) Insert(tx *sql.Tx) error {
 		r.IS_FILE_VALID,
 		r.DATASET_ID,
 		r.META_ID,
-		r.CHECK_SUM,
-		r.FILE_SIZE,
-		r.MD5,
 		r.CREATION_DATE,
 		r.CREATE_BY,
 		r.LAST_MODIFICATION_DATE,

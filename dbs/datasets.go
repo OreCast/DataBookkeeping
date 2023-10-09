@@ -15,7 +15,6 @@ import (
 type Datasets struct {
 	DATASET_ID             int64  `json:"dataset_id"`
 	DATASET                string `json:"dataset" validate:"required"`
-	BUCKET_ID              int64  `json:"bucket_id" validate:"required"`
 	META_ID                string `json:"meta_id" validate:"required"`
 	SITE_ID                int64  `json:"site_id" validate:"required"`
 	PROCESSING_ID          int64  `json:"processing_id" validate:"required"`
@@ -60,6 +59,7 @@ func (a *API) GetDataset() error {
 		"meta_id",
 		"site_id",
 		"processing_id",
+		"parent_id",
 		"creation_date",
 		"create_by",
 		"last_modification_date",
@@ -70,10 +70,11 @@ func (a *API) GetDataset() error {
 		new(sql.NullFloat64), // meta_id
 		new(sql.NullFloat64), // site_id
 		new(sql.NullFloat64), // processing_id
+		new(sql.NullFloat64), // parent_id
 		new(sql.NullFloat64), // creation_date
 		new(sql.NullString),  // create_by
 		new(sql.NullFloat64), // last_modification_date
-		new(sql.NullString)}  //last_modified_by
+		new(sql.NullString)}  // last_modified_by
 	stm = WhereClause(stm, conds)
 
 	// use generic query API to fetch the results from DB
@@ -132,51 +133,94 @@ func insertParts(rec *DatasetRecord, record *Datasets) error {
 		return Error(err, TransactionErrorCode, "", "dbs.insertRecord")
 	}
 	defer tx.Rollback()
+	var siteId, processingId, parentId, datasetId int64
 
-	site := Sites{
-		SITE: rec.Site,
-	}
-	if err = site.Insert(tx); err != nil {
-		return err
-	}
-	for _, b := range rec.Buckets {
-		bucket := Buckets{
-			BUCKET:  b,
-			META_ID: rec.MetaId,
+	// insert site info
+	siteId, err = GetID(tx, "SITES", "SITE_ID", "site", rec.Site)
+	if err != nil {
+		site := Sites{SITE: rec.Site}
+		if err = site.Insert(tx); err != nil {
+			return err
 		}
-		if err = bucket.Insert(tx); err != nil {
+		siteId, err = GetID(tx, "SITES", "SITE_ID", "site", rec.Site)
+		if err != nil {
 			return err
 		}
 	}
-	processing := Processing{
-		PROCESSING: rec.Processing,
+	record.SITE_ID = siteId
+
+	// insert processing info
+	processingId, err = GetID(tx, "PROCESSING", "PROCESSING_ID", "processing", rec.Processing)
+	if err != nil {
+		processing := Processing{PROCESSING: rec.Processing}
+		if err = processing.Insert(tx); err != nil {
+			return err
+		}
+		processingId, err = GetID(tx, "PROCESSING", "PROCESSING_ID", "processing", rec.Processing)
+		if err != nil {
+			return err
+		}
 	}
-	if err = processing.Insert(tx); err != nil {
-		return err
+	record.PROCESSING_ID = processingId
+
+	// insert parent info
+	parentId, err = GetID(tx, "PARENTS", "PARENT_ID", "parent", rec.Parent)
+	if err != nil {
+		if rec.Parent != "" {
+			parent := Parents{PARENT: rec.Parent}
+			if err = parent.Insert(tx); err != nil {
+				return err
+			}
+			parentId, err = GetID(tx, "PARENTS", "PARENT_ID", "parent", rec.Parent)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	if rid, err := getTableId(tx, "SITES", "SITE_ID"); err != nil {
-		return err
-	} else {
-		record.SITE_ID = rid
+	record.PARENT_ID = parentId
+
+	// insert dataset info
+	datasetId, err = GetID(tx, "DATASETS", "DATASET_ID", "dataset", rec.Dataset)
+	if err != nil {
+		record.SITE_ID = siteId
+		record.PARENT_ID = parentId
+		record.PROCESSING_ID = processingId
+		if err = record.Insert(tx); err != nil {
+			return err
+		}
+		datasetId, err = GetID(tx, "DATASETS", "DATASET_ID", "dataset", rec.Dataset)
+		if err != nil {
+			return err
+		}
 	}
-	if rid, err := getTableId(tx, "BUCKETS", "BUCKET_ID"); err != nil {
-		return err
-	} else {
-		record.BUCKET_ID = rid
+
+	// insert all buckets
+	for _, b := range rec.Buckets {
+		bucket := Buckets{
+			BUCKET:     b,
+			DATASET_ID: datasetId,
+			META_ID:    rec.MetaId,
+		}
+		if err = bucket.Insert(tx); err != nil {
+			log.Printf("Bucket %+v already exist", bucket)
+		}
 	}
-	if rid, err := getTableId(tx, "PROCESSING", "PROCESSING_ID"); err != nil {
-		return err
-	} else {
-		record.PROCESSING_ID = rid
+
+	// insert all files
+	for _, f := range rec.Files {
+		file := Files{
+			LOGICAL_FILE_NAME: f,
+			DATASET_ID:        datasetId,
+			META_ID:           rec.MetaId,
+			CREATE_BY:         record.CREATE_BY,
+			LAST_MODIFIED_BY:  record.CREATE_BY,
+		}
+		if err = file.Insert(tx); err != nil {
+			log.Printf("File %+v already exist", file)
+		}
 	}
-	if rid, err := getTableId(tx, "PARENTS", "PARENT_ID"); err != nil {
-		return err
-	} else {
-		record.PARENT_ID = rid
-	}
-	if err = record.Insert(tx); err != nil {
-		return err
-	}
+
+	// commit all transactions
 	err = tx.Commit()
 	return err
 }
@@ -221,7 +265,6 @@ func (r *Datasets) Insert(tx *sql.Tx) error {
 		stm,
 		r.DATASET_ID,
 		r.DATASET,
-		r.BUCKET_ID,
 		r.META_ID,
 		r.SITE_ID,
 		r.PROCESSING_ID,

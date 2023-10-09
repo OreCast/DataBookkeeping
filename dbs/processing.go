@@ -68,7 +68,7 @@ func (a *API) DeleteProcessing() error {
 func (r *Processing) Insert(tx *sql.Tx) error {
 	var err error
 	if r.PROCESSING_ID == 0 {
-		processingID, err := getTableId(tx, "PROCESSING", "PROCESSING_ID")
+		processingID, err := getNextId(tx, "PROCESSING", "PROCESSING_ID")
 		if err != nil {
 			log.Println("unable to get processingID", err)
 			return Error(err, ParametersErrorCode, "", "dbs.processing.Insert")
