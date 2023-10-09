@@ -54,23 +54,21 @@ func (a *API) GetDataset() error {
 		return Error(err, LoadErrorCode, "", "dbs.datasets.Datasets")
 	}
 	cols := []string{
-		"dataset_id",
 		"dataset",
 		"meta_id",
-		"site_id",
-		"processing_id",
-		"parent_id",
+		"site",
+		"processing",
+		"parent",
 		"creation_date",
 		"create_by",
 		"last_modification_date",
 		"last_modified_by"}
 	vals := []interface{}{
-		new(sql.NullInt64),   // dataset_id
 		new(sql.NullString),  // dataset
 		new(sql.NullFloat64), // meta_id
-		new(sql.NullFloat64), // site_id
-		new(sql.NullFloat64), // processing_id
-		new(sql.NullFloat64), // parent_id
+		new(sql.NullString),  // site
+		new(sql.NullString),  // processing
+		new(sql.NullString),  // parent
 		new(sql.NullFloat64), // creation_date
 		new(sql.NullString),  // create_by
 		new(sql.NullFloat64), // last_modification_date
@@ -98,7 +96,14 @@ func (a *API) InsertDataset() error {
 	rec := DatasetRecord{}
 	if a.ContentType == "application/json" {
 		err = json.Unmarshal(data, &rec)
-	} else if a.ContentType == "application/yaml" {
+	} else if a.ContentType == "application/x-yaml" ||
+		a.ContentType == "application/yaml" ||
+		a.ContentType == "application/x-yml" ||
+		a.ContentType == "application/yml" ||
+		a.ContentType == "text/x-yaml" ||
+		a.ContentType == "text/yaml" ||
+		a.ContentType == "text/x-yml" ||
+		a.ContentType == "text/yml" {
 		err = yaml.Unmarshal(data, &rec)
 	} else {
 		log.Println("Parser dataset record using default application/json mtime")
