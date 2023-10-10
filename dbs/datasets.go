@@ -47,6 +47,13 @@ func (a *API) GetDataset() error {
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER
 
+	if val, ok := a.Params["dataset"]; ok {
+		if val != "" {
+			conds, args = AddParam("dataset", "D.DATASET", a.Params, conds, args)
+		}
+	}
+	log.Println("### dataset params", a.Params, conds, args)
+
 	// get SQL statement from static area
 	stm, err := LoadTemplateSQL("select_dataset", tmpl)
 	if err != nil {
@@ -58,20 +65,22 @@ func (a *API) GetDataset() error {
 		"site",
 		"processing",
 		"parent",
-		"creation_date",
 		"create_by",
+		"creation_date",
+		"last_modified_by",
 		"last_modification_date",
-		"last_modified_by"}
+	}
 	vals := []interface{}{
 		new(sql.NullString),  // dataset
-		new(sql.NullFloat64), // meta_id
+		new(sql.NullString),  // meta_id
 		new(sql.NullString),  // site
 		new(sql.NullString),  // processing
 		new(sql.NullString),  // parent
-		new(sql.NullFloat64), // creation_date
 		new(sql.NullString),  // create_by
+		new(sql.NullFloat64), // creation_date
+		new(sql.NullString),  // last_modified_by
 		new(sql.NullFloat64), // last_modification_date
-		new(sql.NullString)}  // last_modified_by
+	}
 	stm = WhereClause(stm, conds)
 
 	// use generic query API to fetch the results from DB

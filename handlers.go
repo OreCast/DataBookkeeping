@@ -17,7 +17,7 @@ import (
 )
 
 type NameRequest struct {
-	Name string `json:"name"`
+	Name string `uri:"name" json:"name"`
 }
 
 // FileHandler provides access to /files and /file/:name end-point
@@ -33,20 +33,21 @@ func DatasetHandler(c *gin.Context) {
 // ApiHandler represents generic API handler for GET/POST/PUT/DELETE requests of a specific API
 func ApiHandler(c *gin.Context, api string) {
 	r := c.Request
-	w := c.Writer
 	if r.Method == "POST" {
-		DBSPostHandler(w, r, api)
+		DBSPostHandler(c, api)
 	} else if r.Method == "PUT" {
-		DBSPutHandler(w, r, api)
+		DBSPutHandler(c, api)
 	} else if r.Method == "DELETE" {
-		DBSDeleteHandler(w, r, api)
+		DBSDeleteHandler(c, api)
 	} else {
-		DBSGetHandler(w, r, api)
+		DBSGetHandler(c, api)
 	}
 }
 
 // helper function to get DBS API
-func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) {
+func getApi(c *gin.Context, a string) (*dbs.API, error) {
+	r := c.Request
+	w := c.Writer
 	// all outputs will be added to output list
 	sep := ","
 	if r.Header.Get("Accept") == "application/ndjson" {
@@ -59,10 +60,10 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 	}
 
 	var api *dbs.API
+	params := make(dbs.Record)
 	if r.Method == "GET" || r.Method == "DELETE" {
 		// TODO: figure out how to handle POST/PUT/DELETE payload
 		// and read GET /api/:name
-		params := make(dbs.Record)
 		//         params, err := parseParams(r)
 		//         if err != nil {
 		//             return nil, err
@@ -84,7 +85,7 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 			return nil, errors.New(msg)
 		}
 		defer r.Body.Close()
-		var params dbs.Record
+		//         var params dbs.Record
 		if utils.VERBOSE > 0 {
 			dn, _ := r.Header["Cms-Authn-Dn"]
 			log.Printf("DBSPostHandler: API=%s, dn=%s, uri=%s", a, dn, requestURI(r))
@@ -131,6 +132,17 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 		api.Writer = utils.GzipWriter{GzipWriter: gw, Writer: w}
 	}
 
+	// many APIs carry /api/*name RESTful end-point and we need to
+	// get name out of it
+	var rest NameRequest
+	if err := c.ShouldBindUri(&rest); err == nil {
+		if a == "dataset" && rest.Name != "" {
+			api.Params["dataset"] = rest.Name
+		} else if a == "file" && rest.Name != "" {
+			api.Params["logical_file_name"] = rest.Name
+		}
+	}
+
 	if utils.VERBOSE > 0 {
 		log.Println("Call DBS API", api.String())
 	}
@@ -140,8 +152,10 @@ func getApi(w http.ResponseWriter, r *http.Request, a string) (*dbs.API, error) 
 // DBSGetHandler is a generic Get handler to call DBS Get APIs.
 //
 //gocyclo:ignore
-func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
-	api, err := getApi(w, r, a)
+func DBSGetHandler(c *gin.Context, a string) {
+	r := c.Request
+	w := c.Writer
+	api, err := getApi(c, a)
 	if err != nil {
 		responseMsg(w, r, err, http.StatusBadRequest)
 	}
@@ -163,8 +177,10 @@ func DBSGetHandler(w http.ResponseWriter, r *http.Request, a string) {
 // DBSPostHandler is a generic handler to call DBS Post APIs
 //
 //gocyclo:ignore
-func DBSPostHandler(w http.ResponseWriter, r *http.Request, a string) {
-	api, err := getApi(w, r, a)
+func DBSPostHandler(c *gin.Context, a string) {
+	r := c.Request
+	w := c.Writer
+	api, err := getApi(c, a)
 	if err != nil {
 		responseMsg(w, r, err, http.StatusBadRequest)
 	}
@@ -184,8 +200,10 @@ func DBSPostHandler(w http.ResponseWriter, r *http.Request, a string) {
 // DBSPutHandler is a generic handler to call DBS put APIs
 //
 //gocyclo:ignore
-func DBSPutHandler(w http.ResponseWriter, r *http.Request, a string) {
-	api, err := getApi(w, r, a)
+func DBSPutHandler(c *gin.Context, a string) {
+	r := c.Request
+	w := c.Writer
+	api, err := getApi(c, a)
 	if err != nil {
 		responseMsg(w, r, err, http.StatusBadRequest)
 	}
@@ -205,8 +223,10 @@ func DBSPutHandler(w http.ResponseWriter, r *http.Request, a string) {
 // DBSDeleteHandler is a generic handler to call DBS delete APIs
 //
 //gocyclo:ignore
-func DBSDeleteHandler(w http.ResponseWriter, r *http.Request, a string) {
-	api, err := getApi(w, r, a)
+func DBSDeleteHandler(c *gin.Context, a string) {
+	r := c.Request
+	w := c.Writer
+	api, err := getApi(c, a)
 	if err != nil {
 		responseMsg(w, r, err, http.StatusBadRequest)
 	}
