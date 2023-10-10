@@ -52,7 +52,9 @@ func (a *API) GetDataset() error {
 			conds, args = AddParam("dataset", "D.DATASET", a.Params, conds, args)
 		}
 	}
-	log.Println("### dataset params", a.Params, conds, args)
+	if utils.VERBOSE > 0 {
+		log.Println("### /dataset params", a.Params, conds, args)
+	}
 
 	// get SQL statement from static area
 	stm, err := LoadTemplateSQL("select_dataset", tmpl)

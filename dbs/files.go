@@ -38,6 +38,19 @@ func (a *API) GetFile() error {
 		msg := "Files API with empty parameter map"
 		return Error(InvalidParamErr, ParametersErrorCode, msg, "dbs.files.Files")
 	}
+	if val, ok := a.Params["logical_file_name"]; ok {
+		if val != "" {
+			conds, args = AddParam("logical_file_name", "F.FILE", a.Params, conds, args)
+		}
+	}
+	if val, ok := a.Params["dataset"]; ok {
+		if val != "" {
+			conds, args = AddParam("dataset", "D.DATASET", a.Params, conds, args)
+		}
+	}
+	if utils.VERBOSE > 0 {
+		log.Println("### /file params", a.Params, conds, args)
+	}
 
 	tmpl := make(Record)
 	tmpl["Owner"] = DBOWNER

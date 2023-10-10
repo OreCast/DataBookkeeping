@@ -61,13 +61,18 @@ func getApi(c *gin.Context, a string) (*dbs.API, error) {
 
 	var api *dbs.API
 	params := make(dbs.Record)
+	if r.Method == "GET" {
+		// for example /file?dataset=/x/y/z we'll parse URL query
+		// r.URL.Query() returns map[string][]string
+		for k, values := range r.URL.Query() {
+			var vals []string
+			for _, v := range values {
+				vals = append(vals, v)
+			}
+			params[k] = vals
+		}
+	}
 	if r.Method == "GET" || r.Method == "DELETE" {
-		// TODO: figure out how to handle POST/PUT/DELETE payload
-		// and read GET /api/:name
-		//         params, err := parseParams(r)
-		//         if err != nil {
-		//             return nil, err
-		//         }
 		api = &dbs.API{
 			Writer:      w,
 			Params:      params,

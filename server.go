@@ -55,7 +55,9 @@ func setupRouter() *gin.Engine {
 	r.GET("/files", FileHandler)
 
 	// individual routes
+	r.GET("/dataset", DatasetHandler)
 	r.GET("/dataset/*name", DatasetHandler)
+	r.GET("/file", FileHandler)
 	r.GET("/file/*name", FileHandler)
 
 	// all POST/PUT/DELET methods ahould be authorized
