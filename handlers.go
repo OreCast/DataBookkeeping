@@ -130,12 +130,15 @@ func getApi(c *gin.Context, a string) (*dbs.API, error) {
 			ContentType: r.Header.Get("Content-Type"),
 		}
 	}
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		w.Header().Set("Content-Encoding", "gzip")
-		gw := gzip.NewWriter(w)
-		defer gw.Close()
-		api.Writer = utils.GzipWriter{GzipWriter: gw, Writer: w}
-	}
+	/*
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			w.Header().Set("Content-Encoding", "gzip")
+			api.ContentType = "gzip"
+			gw := gzip.NewWriter(w)
+			defer gw.Close()
+			api.Writer = utils.GzipWriter{GzipWriter: gw, Writer: w}
+		}
+	*/
 
 	// many APIs carry /api/*name RESTful end-point and we need to
 	// get name out of it
@@ -161,6 +164,13 @@ func DBSGetHandler(c *gin.Context, a string) {
 	r := c.Request
 	w := c.Writer
 	api, err := getApi(c, a)
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		api.ContentType = "gzip"
+		gw := gzip.NewWriter(w)
+		defer gw.Close()
+		api.Writer = utils.GzipWriter{GzipWriter: gw, Writer: w}
+	}
 	if err != nil {
 		responseMsg(w, r, err, http.StatusBadRequest)
 	}
